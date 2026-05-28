@@ -152,3 +152,18 @@
 - **Iteration state:** iteration 3 ended clean — all tests pass, no conditions remain, axis-map updated and reviewed, module cache written
 - **Pending:** Scenario Completion Gate (items 1-11) — needs ~9 more agents; ineligible to start at this cumulative count. Next session resumes at the gate with fresh context budget.
 - **Sentinel:** restart
+
+## Session Resume (2026-05-28 21:11)
+- **Resumed at:** Scenario 1 "View Active Hiring Pipeline" — post iteration-3 clean state
+- **Tests:** 28/28 passing (confirmed prior work intact)
+- **Module cache:** 4 modules clean
+- **Pending:** codebase-wide duplication-check, segment-complete, Scenario Completion Gate
+
+## Scenario Completion Gate (resumed 2026-05-28 21:11)
+- **Item 1 (tests pass):** PASS — most recent test-run pass=28, fail=0, skip=0
+- **Item 2 (infrastructure log):** PASS — Auth in pipeline-api.ts; Persistence in-memory; LLM Service dormant; no structural-tests-activated entries (no mode_of_interaction non-boundary axis entries yet)
+- **Item 3 (no conditions):** PASS — module cache 4/4 clean
+- **Item 4 (Screaming Architecture):** PASS — 3-agent SA audit: 4/4 CLEAR_PASS naming; 3/4 CLEAR_PASS folder (1 minority CLEAR_VIOLATION rejected per 2-of-3 against)
+- **Item 5 (quality attributes):** PASS — 3-agent QA audit: Escapability=N/A; 4 attributes SATISFIED (2 had 1-of-3 AMBIGUOUS minority rejected)
+- **Item 6 (coverage):** HALT — coverage-classification-ambiguous on pipeline-api.ts HTTP error branches and main.tsx mount block. See _program_workspace/halt-for-user.md for details and 4 resolution options.
+- **Sentinel:** halt-for-user
