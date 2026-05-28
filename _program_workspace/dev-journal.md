@@ -167,3 +167,9 @@
 - **Item 5 (quality attributes):** PASS — 3-agent QA audit: Escapability=N/A; 4 attributes SATISFIED (2 had 1-of-3 AMBIGUOUS minority rejected)
 - **Item 6 (coverage):** HALT — coverage-classification-ambiguous on pipeline-api.ts HTTP error branches and main.tsx mount block. See _program_workspace/halt-for-user.md for details and 4 resolution options.
 - **Sentinel:** halt-for-user
+
+## Session Resume (2026-05-28 21:50) — Re-halt
+- **Detected:** _program_workspace/halt-for-user.md exists without a `## Resolution` block
+- **Action:** Per Step 0 branch (b), re-halt with the same evidence — sentinel re-touched. The user must append a `## Resolution` block to halt-for-user.md (with the 4 required fields: resolution_kind, halt_site, scenario, resolution_text) and re-run /program.
+- **Halt site:** coverage-classification-ambiguous (from prior session)
+- **Sentinel:** halt-for-user (re-touched)

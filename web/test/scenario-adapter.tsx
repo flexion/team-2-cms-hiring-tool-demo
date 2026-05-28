@@ -101,7 +101,7 @@ export async function impliedSetup(scenarioName: string): Promise<{ authenticate
 
 export async function impliedVerify(ctx: { authenticated: boolean }, scenarioName: string): Promise<void> {
   if (scenarioName === 'View Active Hiring Pipeline') {
-    const { authenticateAPI, getPositions, getPositionById } = await import('./test-driver');
+    const { authenticateAPI, getPositions, getPositionById, getPositionsWithoutAuth, getPositionByIdRaw, requestUnknownRoute } = await import('./test-driver');
     const token = await authenticateAPI();
     const positions = await getPositions(token);
     if (positions.length !== 7) {
@@ -110,6 +110,21 @@ export async function impliedVerify(ctx: { authenticated: boolean }, scenarioNam
     const position = await getPositionById(token, positions[0].id);
     if (!position.title || !position.gsGrade || !position.status || !position.date) {
       throw new Error('Position missing required fields');
+    }
+
+    const unauthed = await getPositionsWithoutAuth();
+    if (unauthed.status !== 401) {
+      throw new Error(`Expected 401 for unauthenticated request, got ${unauthed.status}`);
+    }
+
+    const missing = await getPositionByIdRaw(token, 'no-such-position');
+    if (missing.status !== 404) {
+      throw new Error(`Expected 404 for unknown position id, got ${missing.status}`);
+    }
+
+    const unsupported = await requestUnknownRoute(token);
+    if (unsupported.status !== 404) {
+      throw new Error(`Expected 404 for unsupported method, got ${unsupported.status}`);
     }
   }
 }

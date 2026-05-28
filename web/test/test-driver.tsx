@@ -51,3 +51,20 @@ export async function getPositionById(token: string, id: string): Promise<Positi
   const result = handleAPIRequest('GET', `/api/positions/${id}`, { Authorization: `Bearer ${token}` });
   return result.body as Position;
 }
+
+export interface APIResponse {
+  status: number;
+  body: unknown;
+}
+
+export async function getPositionsWithoutAuth(): Promise<APIResponse> {
+  return handleAPIRequest('GET', '/api/positions', {});
+}
+
+export async function getPositionByIdRaw(token: string, id: string): Promise<APIResponse> {
+  return handleAPIRequest('GET', `/api/positions/${id}`, { Authorization: `Bearer ${token}` });
+}
+
+export async function requestUnknownRoute(token: string): Promise<APIResponse> {
+  return handleAPIRequest('PUT', '/api/positions', { Authorization: `Bearer ${token}` });
+}

@@ -15,8 +15,8 @@ export function isAuthenticated(token: string): boolean {
 
 export function handleAPIRequest(method: string, path: string, headers: Record<string, string>, body?: string): { status: number; body: unknown } {
   if (method === 'POST' && path === '/api/auth') {
-    const parsed = body ? JSON.parse(body) : {};
-    const session = signIn(parsed.role ?? 'unknown');
+    const parsed = JSON.parse(body as string) as { role: string };
+    const session = signIn(parsed.role);
     return { status: 200, body: session };
   }
 

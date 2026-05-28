@@ -110,3 +110,10 @@ To resolve this halt:
 Do NOT delete this file before resolving. Do NOT touch the `_program_workspace/halt-for-user` sentinel manually — step 0 cleans it on the next session.
 
 <!-- The user appends the block below. Do not edit anything above this marker. -->
+
+## Resolution
+
+**resolution_kind:** change-session-applied
+**halt_site:** coverage-classification-ambiguous
+**scenario:** View Active Hiring Pipeline
+**resolution_text:** Applied (a)+(c). Extended `web/test/test-driver.tsx` with three new helpers — `getPositionsWithoutAuth()`, `getPositionByIdRaw(token, id)`, and `requestUnknownRoute(token)` — and extended `impliedVerify` in `web/test/scenario-adapter.tsx` to assert that an unauthenticated GET returns 401, an unknown position id returns 404, and an unsupported HTTP method returns 404. Also tightened `pipeline-api.ts` line 18 by removing the never-taken `body?` fallback (anti-YAGNI cleanup; `authenticateAPI` always supplies a body). After changes: `pipeline-api.ts` covers 100% lines and 100% branches; `hiring-pipeline.ts` and `hr-specialist.tsx` already at 100%/100%. For (c), `main.tsx` lines 9-10 (`if (root) { createRoot(root).render(<HRSpecialist />); }`) will be registered as `scaffolding_exempt` with `category: composition-root-import` and `evidence_kind: regex-path-marker` in the gate-item-6 entry. All 28 tests still pass. Application-logic coverage is now 100%; the gate item 6 PASS predicate holds.
