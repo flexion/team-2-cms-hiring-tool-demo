@@ -12,7 +12,6 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 | Scenario adapter | web/test/scenario-adapter.tsx |
 | Test driver (UI/HTTP helpers) | web/test/test-driver.tsx |
 | Test infrastructure directory | web/test/ |
-| Vendored/generated code to exclude | web/src/components/ui/ |
 
 ### Source root (per layer)
 
@@ -26,7 +25,7 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 |---|---|---|
 | Application logic (100% required) | web/src/**/*.ts | Domain logic, stores, adapters — all non-UI executable code. |
 | UI modules (scaffolding exempt) | web/src/**/*.tsx | React components and views. |
-| Excluded from coverage | **/*.d.ts, web/test/**, web/src/components/ui/** | Type-only files, test infrastructure, shadcn components. |
+| Excluded from coverage | **/*.d.ts, web/test/** | Type-only files, test infrastructure. |
 
 | Layer | Coverage command | Notes |
 |---|---|---|
@@ -38,9 +37,9 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 |---|---|---|---|
 | Build tool | Vite | vite | Fast HMR, native ESM. |
 | UI framework | React 18 | react, react-dom | Standard SPA framework. |
-| Styling | Tailwind CSS 3 | tailwindcss | Utility-first, rapid prototyping. |
-| Components | shadcn/ui | @radix-ui/react-dialog, @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge | Accessible primitives, copies source into project. |
-| Fonts | Inter | @fontsource/inter | Clean sans-serif for data-heavy UI. |
+| Styling | USWDS | @uswds/uswds | U.S. Web Design System — standard for federal government sites. |
+| Components | USWDS React | @trussworks/react-uswds | Accessible, compliant USWDS components for React. |
+| Fonts | Public Sans | @fontsource/public-sans | USWDS default font for federal sites. |
 | Routing | React Router 6 | react-router-dom | Client-side SPA routing. |
 | Markdown editor | MDXEditor | @mdxeditor/editor | Rich WYSIWYG markdown editing for PD drafts. |
 | Icons | Lucide React | lucide-react | Consistent icon set, tree-shakeable. |
@@ -76,12 +75,16 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 | Storybook | Demo scope doesn't warrant isolated component development tooling. |
 | openai | Using AWS Bedrock directly — no OpenAI-compatible proxy needed. |
 | @anthropic-ai/sdk | Using AWS Bedrock Converse API — model-agnostic, managed by AWS credentials. |
+| Tailwind CSS | Replaced with USWDS for federal government compliance and accessibility. |
+| shadcn/ui | Replaced with @trussworks/react-uswds for federal-compliant components. |
 
 ## Testable Constraints
 
 ### Dependencies
 
-- web/package.json includes @fontsource/inter.
+- web/package.json includes @fontsource/public-sans.
+- web/package.json includes @uswds/uswds.
+- web/package.json includes @trussworks/react-uswds.
 - web/package.json includes @mdxeditor/editor.
 - web/package.json includes react-router-dom.
 - web/package.json includes @aws-sdk/client-bedrock-runtime.
@@ -89,7 +92,10 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 - web/package.json does not include next.
 - web/package.json does not include prisma.
 - web/package.json does not include @anthropic-ai/sdk.
+- web/package.json does not include tailwindcss.
+- web/package.json does not include @radix-ui/react-dialog.
 
 ### File Tree
 
-- web/src/main.tsx imports @fontsource/inter.
+- web/src/main.tsx imports @fontsource/public-sans.
+- web/src/main.tsx imports @uswds/uswds/dist/css/uswds.min.css.

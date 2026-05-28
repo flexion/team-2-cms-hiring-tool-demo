@@ -1,0 +1,19 @@
+{
+  "slugs": [
+    "ui-framework",
+    "test-environment",
+    "auth",
+    "styling",
+    "components",
+    "fonts",
+    "icons",
+    "markdown-editor",
+    "llm",
+    "build-tool",
+    "coverage",
+    "acceptance-tests",
+    "routing"
+  ],
+  "spec_file_hash": "7fbb806d9ddfae1fdc1dffae13dc0943cabf530fda26d419378544bedab81456",
+  "derived_at": "2026-05-28T18:58:57.348864Z"
+}
