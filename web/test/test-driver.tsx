@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import HRSpecialist from '../src/hr-specialist';
-import { signIn, handleAPIRequest } from '../src/hiring-pipeline';
+import { handleAPIRequest } from '../src/pipeline-api';
 
 export interface UISession {
   role: string;
@@ -17,7 +17,6 @@ export interface Position {
 }
 
 export async function signInAsHRSpecialist(): Promise<UISession> {
-  signIn('HR Specialist');
   return { role: 'HR Specialist', authenticated: true };
 }
 

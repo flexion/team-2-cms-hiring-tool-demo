@@ -16,50 +16,10 @@ const PIPELINE_DATA: Position[] = [
   { id: '7', title: 'IT Specialist (Data Management)', gsGrade: 'GS-15', status: 'In Classification Review', date: '2026-05-12' },
 ];
 
-let tokenCounter = 0;
-const activeSessions = new Map<string, { role: string }>();
-let currentUser: { role: string } | null = null;
-
-export function signIn(role: string): void {
-  currentUser = { role };
-}
-
-export function isAuthenticated(): boolean {
-  return currentUser !== null;
-}
-
 export function getPositions(): Position[] {
   return PIPELINE_DATA;
 }
 
 export function getPositionById(id: string): Position | undefined {
   return PIPELINE_DATA.find(p => p.id === id);
-}
-
-export function handleAPIRequest(method: string, path: string, headers: Record<string, string>, body?: string): { status: number; body: unknown } {
-  if (method === 'POST' && path === '/api/auth') {
-    const parsed = body ? JSON.parse(body) : {};
-    const token = `token-${++tokenCounter}`;
-    activeSessions.set(token, { role: parsed.role ?? 'unknown' });
-    return { status: 200, body: { token } };
-  }
-
-  const authHeader = headers['authorization'] ?? headers['Authorization'] ?? '';
-  const token = authHeader.replace('Bearer ', '');
-  if (!activeSessions.has(token)) {
-    return { status: 401, body: { error: 'Unauthorized' } };
-  }
-
-  if (method === 'GET' && path === '/api/positions') {
-    return { status: 200, body: PIPELINE_DATA };
-  }
-
-  const positionMatch = path.match(/^\/api\/positions\/(.+)$/);
-  if (method === 'GET' && positionMatch) {
-    const position = PIPELINE_DATA.find(p => p.id === positionMatch[1]);
-    if (position) return { status: 200, body: position };
-    return { status: 404, body: { error: 'Not found' } };
-  }
-
-  return { status: 404, body: { error: 'Not found' } };
 }

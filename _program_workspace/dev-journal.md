@@ -105,3 +105,50 @@
 - **Conditions:** SPLIT: unanimous 3/3 — nature of user (human UI + programmatic API in one module); DEPENDENCY_DIRECTION: unanimous 3/3 — domain data trapped inside delivery mechanisms
 - **Votes:** unanimous on both conditions
 - **Next:** Apply Extract Module refactoring to separate domain data from delivery mechanisms
+
+### Iteration 2 (continued)
+- **Phase:** Post-refactoring sequence
+- **Refactoring applied:** Extract Module — extracted `web/src/hiring-pipeline.ts` from `web/src/hr-specialist.tsx` (Position type, PIPELINE_DATA, signIn/isAuthenticated/getPositions/getPositionById, handleAPIRequest)
+- **Modules after:** web/src/hr-specialist.tsx (UI delivery), web/src/hiring-pipeline.ts (domain data + auth + API), web/src/main.tsx (framework wiring)
+- **Tests (post-refactoring):** 28/28 passing — Extract Module preserved behavior
+
+### Post-Refactor Verification (Iteration 2)
+- **Tests:** 28/28 passing — Extract Module preserved behavior
+- **Dependency-check:** CORRECT direction; COMPLEX boundary; no inversion needed (less->more imports point correctly from hr-specialist.tsx -> hiring-pipeline.ts). Compliance vote: unanimous-up (2/2). COMPLEX rating reflects the new module's tri-axis bundling (domain + auth + API), flagged for the condition-checker.
+- **Duplication-check (split-trigger):** no duplicate implementations exist in any other source module
+- **Pre-refactor coverage:** original (hr-specialist, SPLIT) and (hr-specialist, DEPENDENCY_DIRECTION) both addressed (NONE on hr-specialist this round)
+- **New conditions discovered post-refactor:**
+  - `web/src/hr-specialist.tsx`: NONE (3/3 unanimous) — original conditions resolved
+  - `web/src/hiring-pipeline.ts`: SPLIT (3/3 unanimous) — mode_of_interaction + nature_of_user; in-process domain getters mixed with HTTP `handleAPIRequest` adapter; DUPLICATION on getPositionById lookup (2/3); module name passes Screaming Architecture but contents carry non-business `handleAPIRequest`
+- **Verdict:** Extract Module relocated rather than resolved the human/programmatic split — domain + boundary adapter still co-located in the new module. Loop continues — apply Extract Module again to separate the HTTP boundary from the domain.
+
+### Axis-Map Update (Iteration 2 refactoring)
+- **entries_added:** composition_root/app (web/src/main.tsx) — recognition pattern matched
+- **entries_modified:** role/HR Specialist — interests + modules populated
+
+### Axis-Map Review (3-agent voting on update)
+- **composition_root/production_entry_point** → 3/3 REVISE consistent → axis renamed to "app" (closed enum composition_root_axis = [app, server, worker, cli]; canonical Vite+React mapping)
+- **role/HR Specialist** → 2/3 REVISE consistent → modules narrowed to [web/src/hr-specialist.tsx] (drop hiring-pipeline.ts pending its SPLIT next iteration)
+- **Both revisions auto-applied** per "Consistent revisions" sub-rule of universal voting
+- **COLLATERAL (advisory):** hiring-pipeline.ts SPLIT-flagged; mode_of_interaction axis pending post-refactor; standing-facet axes not yet recorded
+
+### Iteration 3
+- **Phase:** Refactor (Extract Module — separate HTTP boundary from domain)
+- **Source:** web/src/hiring-pipeline.ts (mixed: domain + auth + HTTP)
+- **Result:** web/src/hiring-pipeline.ts (pure domain — Position, PIPELINE_DATA, getPositions, getPositionById) + new web/src/pipeline-api.ts (HTTP boundary — handleAPIRequest, signIn, isAuthenticated, module-private activeSessions/tokenCounter)
+- **Changes:** test-driver.tsx imports updated to pull handleAPIRequest from pipeline-api.ts; signInAsHRSpecialist no longer calls programmatic-API signIn (vestigial; UI test renders <HRSpecialist /> directly)
+- **Eliminated duplication:** previous getPositionById find lookup duplication (handleAPIRequest now calls getPositionById)
+- **Tests (post-split):** 28/28 passing
+- **Dependency-check (post-split):** CORRECT direction; SIMPLE boundary; pipeline-api.ts (less) → hiring-pipeline.ts (more); compliance vote unanimous-up (2/2)
+- **Duplication-check (split-trigger):** none
+- **Condition re-check:** all three dirty modules NONE per universal voting rule (3/3 NONE on hr-specialist + hiring-pipeline; 2/3 NONE on pipeline-api with 1/3 SPLIT minority rejected per universal rule)
+- **Pre-refactor coverage:** prior (hiring-pipeline.ts, SPLIT) → addressed
+- **Axis-map update:** added nature_of_user/programmatic (pipeline-api.ts) and internal_vs_external/internal (hiring-pipeline.ts); both flat at web/src/ per cardinality + Example 5 internal exemption
+- **Axis-map review:** 3/3 unanimous ACCEPT both new entries
+- **Module cache:** written (4 modules clean)
+
+### Preemptive Session Boundary (cumulative-launches)
+- **Trigger:** cumulative-launches (~18 agents this session, threshold 15)
+- **Iteration state:** iteration 3 ended clean — all tests pass, no conditions remain, axis-map updated and reviewed, module cache written
+- **Pending:** Scenario Completion Gate (items 1-11) — needs ~9 more agents; ineligible to start at this cumulative count. Next session resumes at the gate with fresh context budget.
+- **Sentinel:** restart

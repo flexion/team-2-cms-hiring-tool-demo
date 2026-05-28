@@ -3,8 +3,26 @@
     {
       "facet": "role",
       "axis": "HR Specialist",
-      "interests": [],
-      "modules": []
+      "interests": ["view active hiring pipeline"],
+      "modules": ["web/src/hr-specialist.tsx"]
+    },
+    {
+      "facet": "nature_of_user",
+      "axis": "programmatic",
+      "interests": ["serve the hiring pipeline over HTTP for programmatic consumers"],
+      "modules": ["web/src/pipeline-api.ts"]
+    },
+    {
+      "facet": "internal_vs_external",
+      "axis": "internal",
+      "interests": ["pure domain accessors for the hiring pipeline shared by all consumers"],
+      "modules": ["web/src/hiring-pipeline.ts"]
+    },
+    {
+      "facet": "composition_root",
+      "axis": "app",
+      "interests": ["wire HRSpecialist component into the React DOM root", "load CSS (Public Sans, USWDS)"],
+      "modules": ["web/src/main.tsx"]
     }
   ]
 }
