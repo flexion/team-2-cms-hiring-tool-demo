@@ -23,3 +23,27 @@ export function getPositions(): Position[] {
 export function getPositionById(id: string): Position | undefined {
   return PIPELINE_DATA.find(p => p.id === id);
 }
+
+export interface PDWorkingCopy {
+  duties: string;
+  specializedExperience: string;
+}
+
+export type { LLMSuggestion } from './pd-suggestions';
+export { suggestPDEdits } from './pd-suggestions';
+
+const PD_DRAFTS: Record<string, PDWorkingCopy> = {
+  '1': {
+    duties: 'Designs, develops, and maintains full-stack web applications using modern frameworks. Collaborates with cross-functional teams to deliver software solutions.',
+    specializedExperience: 'One year of specialized experience equivalent to the GS-12 level performing full-stack development duties including front-end and back-end implementation.',
+  },
+};
+
+export function getPDWorkingCopy(positionId: string): PDWorkingCopy | undefined {
+  return PD_DRAFTS[positionId] ? { ...PD_DRAFTS[positionId] } : undefined;
+}
+
+export function updatePDWorkingCopy(positionId: string, pd: PDWorkingCopy): void {
+  PD_DRAFTS[positionId] = pd;
+}
+
