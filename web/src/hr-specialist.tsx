@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Header, Title, PrimaryNav, Table, GridContainer, Button } from '@trussworks/react-uswds';
+import { Header, Title, PrimaryNav, Table, GridContainer, Button, Tag } from '@trussworks/react-uswds';
 import {
   getPositions,
   getPositionById,
@@ -294,41 +294,143 @@ function ResumeReader({
       )
     : new Map<string, 'strong' | 'partial'>();
 
-  const requirementsHighlightedByPassage = selectedPassageId
-    ? new Set(passageIndexByPassageId.get(selectedPassageId) ?? [])
-    : new Set<string>();
+  // When a passage is selected, find each related requirement and the strength of that
+  // (requirement, passage) pair from the requirements list — so the left-side highlights
+  // use the same strong/partial palette as the right side.
+  const requirementsHighlightedByPassage = new Map<string, 'strong' | 'partial'>();
+  if (selectedPassageId) {
+    for (const reqId of passageIndexByPassageId.get(selectedPassageId) ?? []) {
+      const reqMapping = reqMappingById.get(reqId);
+      const match = reqMapping?.passages.find(p => p.passageId === selectedPassageId);
+      if (match) requirementsHighlightedByPassage.set(reqId, match.matchStrength);
+    }
+  }
 
   const overallMatchStrengthByPassage = new Map<string, 'strong' | 'partial'>();
+  const overallMatchStrengthByReq = new Map<string, 'strong' | 'partial'>();
   for (const req of mapping.requirements) {
     for (const p of req.passages) {
-      const current = overallMatchStrengthByPassage.get(p.passageId);
+      const currentP = overallMatchStrengthByPassage.get(p.passageId);
       if (p.matchStrength === 'strong') {
         overallMatchStrengthByPassage.set(p.passageId, 'strong');
-      } else if (!current) {
+      } else if (!currentP) {
         overallMatchStrengthByPassage.set(p.passageId, 'partial');
+      }
+      const currentR = overallMatchStrengthByReq.get(req.id);
+      if (p.matchStrength === 'strong') {
+        overallMatchStrengthByReq.set(req.id, 'strong');
+      } else if (!currentR) {
+        overallMatchStrengthByReq.set(req.id, 'partial');
       }
     }
   }
 
+  const hasActiveSelection = selectedRequirementId !== null || selectedPassageId !== null;
+
   return (
     <section data-testid="resume-reader" style={{ margin: '16px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, margin: 0 }}>
-          Resume Reader: <span data-testid="resume-applicant-name">{applicant.applicantName}</span>
-        </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '16px' }}>
+        <div>
+          <h1 className="usa-heading" style={{ fontSize: '28px', fontWeight: 700, margin: 0 }}>
+            Resume Reader: <span data-testid="resume-applicant-name">{applicant.applicantName}</span>
+          </h1>
+          <p className="usa-prose" style={{ margin: '4px 0 0 0', color: '#71767a', fontSize: '14px' }}>
+            Click a PD requirement to highlight matching resume passages, or click a passage to see which requirements it supports.
+          </p>
+        </div>
         <Button type="button" outline onClick={onClose} data-testid="close-resume-reader">
           Back to Position
         </Button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <aside data-testid="pd-requirements-pane" style={{ borderRight: '1px solid #dfe1e2', paddingRight: '12px' }}>
-          <h2 style={{ fontSize: '18px' }}>PD Requirements</h2>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+
+      <div
+        aria-label="Match-strength legend"
+        style={{
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'center',
+          padding: '8px 12px',
+          margin: '8px 0 16px 0',
+          backgroundColor: '#f0f0f0',
+          borderLeft: '4px solid #005ea2',
+          fontSize: '14px',
+        }}
+      >
+        <span style={{ fontWeight: 600 }}>Legend:</span>
+        <Tag style={{ backgroundColor: '#00a91c', color: '#ffffff' }}>Strong match</Tag>
+        <Tag style={{ backgroundColor: '#7ec988', color: '#1b1b1b' }}>Partial match</Tag>
+        <Tag style={{ backgroundColor: '#005ea2', color: '#ffffff' }}>Selected</Tag>
+        <Tag style={{ backgroundColor: '#e1f3f8', color: '#1b1b1b' }}>Related</Tag>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <aside
+          data-testid="pd-requirements-pane"
+          aria-label="PD requirements"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #dfe1e2',
+            borderRadius: '4px',
+            padding: '16px',
+          }}
+        >
+          <h2 className="usa-heading" style={{ fontSize: '18px', margin: '0 0 12px 0' }}>PD Requirements</h2>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {requirements.map(req => {
               const mappedPassageCount = reqMappingById.get(req.id)?.passages.length ?? 0;
               const isSelected = selectedRequirementId === req.id;
-              const isHighlightedByPassage = requirementsHighlightedByPassage.has(req.id);
-              const highlighted = isSelected || isHighlightedByPassage;
+              const passageHighlightStrength = requirementsHighlightedByPassage.get(req.id) ?? null;
+              const overallStrength = overallMatchStrengthByReq.get(req.id) ?? null;
+              const isPassageHighlighted = passageHighlightStrength !== null;
+              const matchStrength = passageHighlightStrength ?? overallStrength;
+              const highlighted = isSelected || isPassageHighlighted;
+
+              let bg = '#ffffff';
+              let fg = '#1b1b1b';
+              let borderColor = '#dfe1e2';
+              if (isSelected) {
+                bg = '#005ea2';
+                fg = '#ffffff';
+                borderColor = '#162e51';
+              } else if (isPassageHighlighted && passageHighlightStrength === 'strong') {
+                bg = '#00a91c';
+                fg = '#ffffff';
+                borderColor = '#216e1f';
+              } else if (isPassageHighlighted && passageHighlightStrength === 'partial') {
+                bg = '#7ec988';
+                fg = '#1b1b1b';
+                borderColor = '#216e1f';
+              } else if (!hasActiveSelection && overallStrength === 'strong') {
+                bg = '#ecf3ec';
+                fg = '#1b1b1b';
+                borderColor = '#7ec988';
+              } else if (!hasActiveSelection && overallStrength === 'partial') {
+                bg = '#f5f6f7';
+                fg = '#1b1b1b';
+                borderColor = '#dfe1e2';
+              }
+
+              const sectionLabelColor = isSelected
+                ? '#dfe1e2'
+                : isPassageHighlighted && passageHighlightStrength === 'strong'
+                  ? '#dfe1e2'
+                  : '#565c65';
+
+              const tagBg = isSelected
+                ? '#ffffff'
+                : matchStrength === 'strong'
+                  ? '#ffffff'
+                  : matchStrength === 'partial'
+                    ? '#ffffff'
+                    : '#f0f0f0';
+              const tagFg = isSelected
+                ? '#005ea2'
+                : matchStrength === 'strong'
+                  ? '#216e1f'
+                  : matchStrength === 'partial'
+                    ? '#216e1f'
+                    : '#1b1b1b';
+
               return (
                 <li
                   key={req.id}
@@ -336,55 +438,107 @@ function ResumeReader({
                   data-section={req.section}
                   data-mapped-passage-count={mappedPassageCount}
                   data-highlighted={highlighted ? 'true' : 'false'}
+                  data-match-strength={passageHighlightStrength ?? ''}
                   data-selected={isSelected ? 'true' : 'false'}
                   onClick={() => onSelectRequirement(req.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectRequirement(req.id); } }}
                   tabIndex={0}
                   role="button"
+                  aria-pressed={isSelected}
                   style={{
                     cursor: 'pointer',
-                    padding: '10px',
-                    margin: '6px 0',
-                    backgroundColor: isSelected
-                      ? '#005ea2'
-                      : isHighlightedByPassage
-                        ? '#73b3e7'
-                        : '#f0f0f0',
-                    color: isSelected ? '#ffffff' : isHighlightedByPassage ? '#1b1b1b' : '#1b1b1b',
-                    borderLeft: isSelected
-                      ? '4px solid #162e51'
-                      : isHighlightedByPassage
-                        ? '4px solid #005ea2'
-                        : '4px solid transparent',
-                    fontWeight: highlighted ? 600 : 400,
+                    padding: '12px 14px',
+                    margin: '0 0 8px 0',
+                    backgroundColor: bg,
+                    color: fg,
+                    border: `1px solid ${borderColor}`,
+                    borderLeft: `4px solid ${borderColor}`,
+                    borderRadius: '4px',
+                    transition: 'background-color 120ms ease, border-color 120ms ease',
                   }}
                 >
-                  <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: isSelected ? '#dfe1e2' : '#71767a' }}>{req.section}</strong>
-                  <p style={{ margin: '4px 0 0 0' }}>{req.text}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: sectionLabelColor }}>
+                      {req.section}
+                    </span>
+                    {isPassageHighlighted ? (
+                      <Tag style={{ backgroundColor: tagBg, color: tagFg, fontSize: '11px' }}>
+                        {passageHighlightStrength === 'strong' ? 'Strong match' : 'Partial match'}
+                      </Tag>
+                    ) : (
+                      <Tag style={{ backgroundColor: tagBg, color: tagFg, fontSize: '11px' }}>
+                        {mappedPassageCount} match{mappedPassageCount === 1 ? '' : 'es'}
+                      </Tag>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontWeight: highlighted ? 600 : 400, lineHeight: 1.4 }}>{req.text}</p>
                 </li>
               );
             })}
           </ul>
         </aside>
-        <div data-testid="resume-pane" style={{ paddingLeft: '12px' }}>
-          <h2 style={{ fontSize: '18px' }}>Resume Content</h2>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+
+        <div
+          data-testid="resume-pane"
+          aria-label="Resume content"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #dfe1e2',
+            borderRadius: '4px',
+            padding: '16px',
+          }}
+        >
+          <h2 className="usa-heading" style={{ fontSize: '18px', margin: '0 0 12px 0' }}>Resume Content</h2>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {applicant.passages.map(passage => {
               const reqHighlightStrength = passagesHighlightedByReq.get(passage.id) ?? null;
               const overallStrength = overallMatchStrengthByPassage.get(passage.id) ?? null;
               const matchStrength = reqHighlightStrength ?? overallStrength;
               const isSelected = selectedPassageId === passage.id;
               const isReqHighlighted = reqHighlightStrength !== null;
-              const bg = isSelected
-                ? '#ffbe2e'
+
+              let bg = '#ffffff';
+              let fg = '#1b1b1b';
+              let borderColor = '#dfe1e2';
+              if (isSelected) {
+                bg = '#005ea2';
+                fg = '#ffffff';
+                borderColor = '#162e51';
+              } else if (isReqHighlighted && reqHighlightStrength === 'strong') {
+                bg = '#00a91c';
+                fg = '#ffffff';
+                borderColor = '#216e1f';
+              } else if (isReqHighlighted && reqHighlightStrength === 'partial') {
+                bg = '#7ec988';
+                fg = '#1b1b1b';
+                borderColor = '#216e1f';
+              } else if (!hasActiveSelection && overallStrength === 'strong') {
+                bg = '#ecf3ec';
+                fg = '#1b1b1b';
+                borderColor = '#7ec988';
+              } else if (!hasActiveSelection && overallStrength === 'partial') {
+                bg = '#f5f6f7';
+                fg = '#1b1b1b';
+                borderColor = '#dfe1e2';
+              }
+
+              const tagBg = isSelected
+                ? '#ffffff'
                 : isReqHighlighted
-                  ? (reqHighlightStrength === 'strong' ? '#4d8055' : '#94bfa2')
-                  : (overallStrength === 'strong' ? '#e8f5ed' : overallStrength === 'partial' ? '#f5f9f5' : '#fafafa');
-              const fg = isSelected
-                ? '#1b1b1b'
-                : isReqHighlighted && reqHighlightStrength === 'strong'
                   ? '#ffffff'
-                  : '#1b1b1b';
+                  : matchStrength === 'strong'
+                    ? '#00a91c'
+                    : matchStrength === 'partial'
+                      ? '#7ec988'
+                      : '#dfe1e2';
+              const tagFg = isSelected
+                ? '#005ea2'
+                : isReqHighlighted
+                  ? '#216e1f'
+                  : matchStrength === 'strong'
+                    ? '#ffffff'
+                    : '#1b1b1b';
+
               return (
                 <li
                   key={passage.id}
@@ -397,21 +551,27 @@ function ResumeReader({
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectPassage(passage.id); } }}
                   tabIndex={0}
                   role="button"
+                  aria-pressed={isSelected}
                   style={{
                     cursor: 'pointer',
-                    padding: '10px',
-                    margin: '6px 0',
+                    padding: '12px 14px',
+                    margin: '0 0 8px 0',
                     backgroundColor: bg,
                     color: fg,
-                    borderLeft: isSelected
-                      ? '4px solid #b86c00'
-                      : isReqHighlighted
-                        ? '4px solid #1b1b1b'
-                        : '4px solid transparent',
-                    fontWeight: isSelected || isReqHighlighted ? 600 : 400,
+                    border: `1px solid ${borderColor}`,
+                    borderLeft: `4px solid ${borderColor}`,
+                    borderRadius: '4px',
+                    transition: 'background-color 120ms ease, border-color 120ms ease',
                   }}
                 >
-                  {passage.text}
+                  {matchStrength && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <Tag style={{ backgroundColor: tagBg, color: tagFg, fontSize: '11px' }}>
+                        {matchStrength === 'strong' ? 'Strong match' : 'Partial match'}
+                      </Tag>
+                    </div>
+                  )}
+                  <p style={{ margin: 0, lineHeight: 1.5, fontWeight: isSelected ? 600 : 400 }}>{passage.text}</p>
                 </li>
               );
             })}
