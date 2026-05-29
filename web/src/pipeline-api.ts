@@ -1,4 +1,4 @@
-import { getPositions, getPositionById } from './hiring-pipeline';
+import { getPositions, getPositionById } from './internal_vs_external/hiring-pipeline';
 
 let tokenCounter = 0;
 const activeSessions = new Map<string, { role: string }>();

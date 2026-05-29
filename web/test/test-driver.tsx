@@ -68,3 +68,36 @@ export async function getPositionByIdRaw(token: string, id: string): Promise<API
 export async function requestUnknownRoute(token: string): Promise<APIResponse> {
   return handleAPIRequest('PUT', '/api/positions', { Authorization: `Bearer ${token}` });
 }
+
+export async function setupPositionDetail(session: UISession, positionTitle: string): Promise<{ container: HTMLElement }> {
+  const { container } = render(<HRSpecialist />);
+  clickRow(container, positionTitle);
+  return { container };
+}
+
+export async function clickLLMSuggest(container: HTMLElement): Promise<void> {
+  const button = container.querySelector('[data-testid="llm-suggest-button"]') as HTMLElement | null;
+  if (!button) throw new Error('"LLM Suggest" button not found');
+  button.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+export async function acceptSuggestion(container: HTMLElement, index: number): Promise<void> {
+  const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+  const suggestion = suggestions[index] as HTMLElement | undefined;
+  if (!suggestion) throw new Error(`Suggestion at index ${index} not found`);
+  const acceptBtn = suggestion.querySelector('[data-testid="accept-button"]') as HTMLElement | null;
+  if (!acceptBtn) throw new Error(`Accept button not found for suggestion ${index}`);
+  acceptBtn.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+export async function rejectSuggestion(container: HTMLElement, index: number): Promise<void> {
+  const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+  const suggestion = suggestions[index] as HTMLElement | undefined;
+  if (!suggestion) throw new Error(`Suggestion at index ${index} not found`);
+  const rejectBtn = suggestion.querySelector('[data-testid="reject-button"]') as HTMLElement | null;
+  if (!rejectBtn) throw new Error(`Reject button not found for suggestion ${index}`);
+  rejectBtn.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+}

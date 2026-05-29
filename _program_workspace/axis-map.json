@@ -3,7 +3,7 @@
     {
       "facet": "role",
       "axis": "HR Specialist",
-      "interests": ["view active hiring pipeline"],
+      "interests": ["view active hiring pipeline", "draft and refine position descriptions with LLM assistance"],
       "modules": ["web/src/hr-specialist.tsx"]
     },
     {
@@ -15,8 +15,14 @@
     {
       "facet": "internal_vs_external",
       "axis": "internal",
-      "interests": ["pure domain accessors for the hiring pipeline shared by all consumers"],
-      "modules": ["web/src/hiring-pipeline.ts"]
+      "interests": ["pure domain accessors for the hiring pipeline shared by all consumers", "PD working copy management"],
+      "modules": ["web/src/internal_vs_external/hiring-pipeline.ts"]
+    },
+    {
+      "facet": "internal_vs_external",
+      "axis": "external (LLM Service)",
+      "interests": ["generate LLM-powered suggestions for position description improvement"],
+      "modules": ["web/src/internal_vs_external/pd-suggestions.ts"]
     },
     {
       "facet": "composition_root",

@@ -15,3 +15,28 @@ A programmatic consumer authenticates via API credentials and retrieves the list
 - **Nature of user:** Human (Maria). Programmatic mirror derived above.
 - **Mode of interaction:** Three axes present as candidates. `development` for tests; `production` for real AWS Bedrock calls; `demonstration` for mock-server HTTP calls. Per-mode plumbings pending until infrastructure splits.
 - **Internal vs. external:** LLM Service is `external` (declared in specs/external-boundaries.md). Auth and persistence are `internal`.
+
+---
+
+## Scenario: Draft and Refine a Position Description with LLM Assistance
+
+### Implied: Programmatic mirror of "Draft and Refine a Position Description with LLM Assistance"
+A programmatic consumer authenticates via API credentials, retrieves the position detail for the IT Specialist (Full Stack Engineer) GS-13 position (including the PD working copy with duties and specialized experience sections), requests LLM suggestions for the PD content via a POST endpoint, receives a list of suggestions (each with target section, proposed text change, and explanation), accepts specific suggestions via the API (PATCH/POST), and rejects others. After accept/reject operations, retrieves the updated PD working copy reflecting only accepted suggestions. All operations succeed through the HTTP interface with appropriate authentication.
+
+### Implied: Non-develop infrastructure for "Draft and Refine a Position Description with LLM Assistance"
+- Auth (tech-stack, non-boundary): production plumbing at the web layer — implements auth interface, wired for `production` mode; no stubs.
+- Persistence (tech-stack, non-boundary): production plumbing at the web layer — implements store interface for PD content and suggestion state, wired for `production` mode; no stubs.
+- LLM Service (external boundary — THIS SCENARIO REALIZES IT): assertions ACTIVE. At the web layer where LLM interaction is realized by this scenario:
+  - Production plumbing: AWS Bedrock (Converse API via @aws-sdk/client-bedrock-runtime), calls through Vite server middleware at `/api/llm`, wired for `production` mode; no stubs.
+  - Development plumbing: returns canned suggestion responses instantly without credentials, wired for `development` mode; no stubs.
+  - Demonstration plumbing: thin HTTP client against mock server (`${MOCK_SERVER_URL:-http://localhost:4000}/mock/llm-service`), wired for `demonstration` mode; no stubs.
+  - All three implement the LLM plumbing interface (suggestPdEdits operation).
+
+### Standing-facet analysis
+- **Distribution:** Same as Scenario 1 — narrative continuity ("navigated to the position detail page").
+- **Nature of user:** Human (Maria). Programmatic mirror derived above.
+- **Mode of interaction:** This scenario actively exercises the LLM boundary. Development mode returns canned suggestions; production mode calls AWS Bedrock; demonstration mode calls the mock server. Per-mode plumbings will emerge via refactoring when the condition checker detects the LLM coupling.
+- **Internal vs. external:** LLM Service is the active external boundary this scenario. Auth and persistence remain internal.
+
+### Declared-boundary activation status
+- **LLM Service:** ACTIVE (assertions activated at Scenario 1 derivation time; this scenario realizes the boundary at the web layer — per-layer plumbings will be created via refactoring when business code reaches for the boundary).

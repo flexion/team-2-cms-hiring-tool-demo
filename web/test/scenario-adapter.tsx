@@ -4,6 +4,7 @@ import { signInAsHRSpecialist, clickRow, getRenderedApp } from './test-driver';
 export const implementedScenarios = new Set([
   'View Active Hiring Pipeline',
   'Programmatic mirror of "View Active Hiring Pipeline"',
+  'Draft and Refine a Position Description with LLM Assistance',
 ]);
 
 export interface AdapterContext {
@@ -15,7 +16,20 @@ export async function setup(scenarioName: string, groupLabel: string): Promise<A
   if (scenarioName === 'View Active Hiring Pipeline') {
     const session = await signInAsHRSpecialist();
     const { container } = getRenderedApp(session);
-    clickRow(container, 'IT Specialist (Full Stack Engineer)');
+    return { container, session };
+  }
+  if (scenarioName === 'Draft and Refine a Position Description with LLM Assistance') {
+    const { setupPositionDetail, clickLLMSuggest, acceptSuggestion, rejectSuggestion } = await import('./test-driver');
+    const session = await signInAsHRSpecialist();
+    const { container } = await setupPositionDetail(session, 'IT Specialist (Full Stack Engineer)');
+    if (groupLabel.includes('Mid-conditions')) {
+      await clickLLMSuggest(container);
+    } else {
+      await clickLLMSuggest(container);
+      await acceptSuggestion(container, 0);
+      await rejectSuggestion(container, 1);
+      await acceptSuggestion(container, 2);
+    }
     return { container, session };
   }
   throw new Error(`No setup for scenario: ${scenarioName}`);
@@ -29,6 +43,9 @@ export async function verify(
 ): Promise<void> {
   if (scenarioName === 'View Active Hiring Pipeline') {
     return verifyPipeline(ctx, postcondition);
+  }
+  if (scenarioName === 'Draft and Refine a Position Description with LLM Assistance') {
+    return verifyPDDraft(ctx, groupLabel, postcondition);
   }
   throw new Error(`No verifier for scenario: ${scenarioName}`);
 }
@@ -72,6 +89,82 @@ async function verifyPipeline(ctx: AdapterContext, postcondition: string): Promi
   if (!fn) {
     throw new Error(`No verifier for postcondition: ${postcondition}`);
   }
+  fn();
+}
+
+async function verifyPDDraft(ctx: AdapterContext, groupLabel: string, postcondition: string): Promise<void> {
+  const { container } = ctx;
+
+  const verifiers: Record<string, () => void> = {
+    'Maria sees a suggestions panel appear alongside the editor.': () => {
+      const panel = container.querySelector('[data-testid="suggestions-panel"]');
+      if (!panel) throw new Error('Suggestions panel not found');
+    },
+    'Maria sees at least one suggested edit with an explanation of why the change improves the PD.': () => {
+      const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+      if (suggestions.length === 0) throw new Error('No suggestions found');
+      for (const s of suggestions) {
+        const explanation = s.querySelector('[data-testid="suggestion-explanation"]');
+        if (!explanation || !explanation.textContent?.trim()) {
+          throw new Error('Suggestion missing explanation');
+        }
+      }
+    },
+    'Each suggestion references a specific section of the PD (duties or specialized experience).': () => {
+      const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+      if (suggestions.length === 0) throw new Error('No suggestions found');
+      for (const s of suggestions) {
+        const section = s.querySelector('[data-testid="suggestion-section"]');
+        if (!section) throw new Error('Suggestion missing section reference');
+        const text = section.textContent?.toLowerCase() ?? '';
+        if (!text.includes('duties') && !text.includes('specialized experience')) {
+          throw new Error(`Suggestion section "${section.textContent}" does not reference duties or specialized experience`);
+        }
+      }
+    },
+    'Maria sees the PD working copy updated with the accepted duty statement suggestion.': () => {
+      const editor = container.querySelector('[data-testid="pd-editor"]');
+      if (!editor) throw new Error('PD editor not found');
+      if (!editor.textContent?.includes('measurable outcomes')) {
+        throw new Error('PD editor does not contain the accepted duty statement suggestion');
+      }
+    },
+    'Maria sees the PD working copy updated with the accepted KSA element suggestion.': () => {
+      const editor = container.querySelector('[data-testid="pd-editor"]');
+      if (!editor) throw new Error('PD editor not found');
+      if (!editor.textContent?.includes('knowledge, skills, and abilities')) {
+        throw new Error('PD editor does not contain the accepted KSA element suggestion');
+      }
+    },
+    'Maria sees the rejected specialized experience suggestion is not applied to the PD working copy.': () => {
+      const editor = container.querySelector('[data-testid="pd-editor"]');
+      if (!editor) throw new Error('PD editor not found');
+      const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+      const rejected = suggestions[1];
+      if (rejected) {
+        const proposedText = rejected.querySelector('[data-testid="suggestion-proposed-text"]')?.textContent ?? '';
+        if (proposedText && editor.textContent?.includes(proposedText)) {
+          throw new Error('Rejected suggestion was applied to the PD');
+        }
+      }
+    },
+    'Maria sees the suggestions panel shows which suggestions were accepted and which were rejected.': () => {
+      const suggestions = container.querySelectorAll('[data-testid="suggestion"]');
+      if (suggestions.length === 0) throw new Error('No suggestions found');
+      let hasAccepted = false;
+      let hasRejected = false;
+      for (const s of suggestions) {
+        const status = s.getAttribute('data-status');
+        if (status === 'accepted') hasAccepted = true;
+        if (status === 'rejected') hasRejected = true;
+      }
+      if (!hasAccepted) throw new Error('No accepted suggestion indicator found');
+      if (!hasRejected) throw new Error('No rejected suggestion indicator found');
+    },
+  };
+
+  const fn = verifiers[postcondition];
+  if (!fn) throw new Error(`No verifier for postcondition: ${postcondition}`);
   fn();
 }
 

@@ -54,8 +54,9 @@ function parseScenarios(content: string): ParsedScenario[] {
 function extractConditions(text: string): string[] {
   return text
     .split('\n')
-    .map(line => line.replace(/^- /, '').trim())
-    .filter(line => line.length > 0 && !line.startsWith('|') && !line.startsWith('#'));
+    .filter(line => line.trimStart().startsWith('- '))
+    .map(line => line.replace(/^[\s]*- /, '').trim())
+    .filter(line => line.length > 0);
 }
 
 const scenarioContent = readFileSync(scenariosPath, 'utf-8');

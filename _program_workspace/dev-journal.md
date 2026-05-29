@@ -204,3 +204,77 @@
 - **Tests:** 28/28 passing
 - **Coverage:** application_logic 100%, overall 98.55% (main.tsx 9-10 scaffolding_exempt)
 - **Halts:** 1 — coverage-classification-ambiguous (resolved via change-session-applied / option (a)+(c))
+
+---
+
+## Scenario: Draft and Refine a Position Description with LLM Assistance
+- **Started:** 2026-05-29 09:44
+- **Classification:** Standard (2 segments, 7 conditions)
+
+### Cross-Cutting Realization (design)
+- **Hash:** e48f921b079f72a7821fb22c981703bbaf5fabf4c75d85f7f05563e10edb05f1
+- **Status:** partial (6 realized, 5 unrealized)
+- **Realized:** CMS Hiring Tool header, modal close button, Escape dismisses modal, detail page return link, navigation header on every page, pipeline table as default view
+- **Unrealized:** Public Sans font (CSS not resolvable in happy-dom), position selection from list (scenario-specific), 3 LLM suggestion indicators (temporal/flow-specific)
+
+### Cross-Cutting Realization (tech-stack)
+- **Hash:** d053f08eca474e3d9b7b1d4bc500f80be625c09db3dfd893e8e44fd347de368f
+- **Status:** complete (14 realized, 0 unrealized)
+- **Realized:** All 12 dependency constraints + 2 file-tree import constraints
+
+### Halt Resolution
+- **Site:** step-0-naming-backfill-violation
+- **Resolution:** defer-indefinitely — web/src/main.tsx is a legitimate composition root with canonical name; if(root) null guard is idiomatic React bootstrapping
+
+### Narrative–Postcondition Consistency Check
+- **Result:** No inconsistencies found (3/3 unanimous — no findings)
+
+### Derivation Audit
+- **Agents launched:** 3
+- **Union gaps:** 0
+- **Rejected candidates:** routing, rich text editing, component library (presentation-layer libraries, not mode-varying infrastructure)
+- **Result:** PASS — LLM Service is the sole mode-of-interaction concern; programmatic mirror covers full verb chain
+
+### Segment 1: Mid-conditions (after Maria requests LLM suggestions)
+
+## Scenario 2: Draft and Refine a Position Description with LLM Assistance
+
+### Iteration 1 — Grow + Refactor
+
+**Phase:** Grow (both segments satisfied in one iteration)
+**Action:** Implemented position detail view with PD editor and LLM suggestions panel in hr-specialist.tsx. Added PD working copy management and canned LLM suggestion stub to hiring-pipeline.ts.
+**Test results:** 35 passing, 0 failing (all 7 postconditions + 15 Scenario 1 tests + 14 constraint tests green)
+
+**Condition check:** 3-agent audit. hr-specialist.tsx → NONE (2-of-3). hiring-pipeline.ts → SPLIT (2-of-3). Basis: LLM suggestion generation is an external boundary concern changing independently of pipeline domain data.
+
+**Refactoring:** Extract Module — suggestPDEdits + LLMSuggestion extracted from hiring-pipeline.ts to pd-suggestions.ts. Folder reorganization: both modules moved to web/src/internal_vs_external/ per multiplicity rule.
+
+**UI design engagement:** /flexion-frontend-design Constrained → hr-specialist.tsx. T2 review: copy 0/1 (preference: LLM Suggest button could be more descriptive), a11y 1/0 (clear_problem: clickable table rows lacked keyboard accessibility — fixed with tabIndex, role=button, onKeyDown), critique 0/1 (preference: inline styles vs USWDS classes).
+
+**Dependency check:** CORRECT on all 4 forms. SIMPLE boundary. No inversion needed.
+**Duplication check:** No duplication detected.
+**Axis-map review:** 3-agent, 2-of-3 ACCEPT on all entries (agents flagged re-export coupling and stub-vs-real-boundary, both overruled by majority).
+
+### Scenario Completion Gate
+
+- **Item 1 (tests):** PASS — 35 passing
+- **Item 2 (infrastructure):** PASS — LLM Service boundary declared, dev-mode stub active
+- **Item 3 (conditions):** PASS — SPLIT resolved in 1 iteration
+- **Item 4 (screaming architecture):** PASS — 3/3 unanimous CLEAR_SATISFIED on pd-suggestions.ts
+- **Item 5 (quality attributes):** PASS — all 5 attributes satisfied
+- **Item 6 (coverage):** PASS — application logic 100%, overall 98.64%
+- **Item 7 (dependency graph):** PASS — generated fresh
+- **Item 8 (summary + axis map):** PASS — axis map verified by 3-agent review
+- **Item 9 (module cache):** PASS — all 5 modules present with matching hashes
+- **Item 10 (notes to self):** PASS — no conditions met, smooth scenario
+- **Item 11 (compliance):** Informational — findings from cross-session entries
+
+## Summary (Scenario 2)
+
+- **Iterations:** 1
+- **Refactorings:** 1 (Extract Module: hiring-pipeline.ts → pd-suggestions.ts)
+- **Final modules:** hr-specialist.tsx, hiring-pipeline.ts, pd-suggestions.ts, pipeline-api.ts, main.tsx
+- **Completed:** 2026-05-29 10:26
+- **Scenario hash:** 91a2bc60278f7b5c23933ec8005e7285c4328648fffeafbfee052f67a67cbb89
+- **Constraints hash:** e48f921b079f72a7821fb22c981703bbaf5fabf4c75d85f7f05563e10edb05f1
+- **Tech-stack constraints hash:** d053f08eca474e3d9b7b1d4bc500f80be625c09db3dfd893e8e44fd347de368f
