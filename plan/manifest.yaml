@@ -1,0 +1,471 @@
+---
+# CMS Hiring POC — Implementation Manifest
+# Stack: Java 21 + Spring Boot 3.x + PostgreSQL 16 + AWS Bedrock
+# Scope: LOCAL DEVELOPMENT ONLY — no cloud deployment
+# Generated: 2026-05-28
+
+hot_files:
+  - path: backend/src/main/java/gov/cms/hiring/Application.java
+    reason: "Spring Boot entry point — a bad import or component scan path breaks startup"
+  - path: backend/src/main/resources/application.yml
+    reason: "Central config for datasource, AWS region, server port — bad YAML breaks startup"
+  - path: backend/build.gradle.kts
+    reason: "Gradle dependency list — version conflicts cause hard-to-debug build failures"
+  - path: frontend/src/App.tsx
+    reason: "React Router route table — a syntax error here white-screens the entire frontend"
+  - path: frontend/package.json
+    reason: "npm dependency list — version conflicts cause npm install to fail"
+  - path: frontend/src/types/index.ts
+    reason: "Shared TypeScript type definitions — conflicting definitions break the entire frontend compile"
+  - path: docker-compose.yml
+    reason: "Service orchestration — wrong port mapping or missing health check breaks the whole local stack"
+
+model_recommendations:
+  haiku:
+    use_for:
+      - Spring Boot CRUD controllers, services, and repositories
+      - JPA entity classes and Flyway migration SQL files
+      - React page components with standard patterns
+      - JUnit 5 unit tests with Mockito
+      - Testcontainers integration tests
+      - Docker Compose and Dockerfile configuration
+  sonnet:
+    use_for:
+      - AWS Bedrock SDK integration and streaming response parsing
+      - Embedding and cosine similarity logic
+
+phases:
+  - id: phase-0a
+    name: "Bootable Skeleton"
+    model_recommendation: haiku
+    work_units:
+      - id: p0a-backend-scaffold
+        title: "Spring Boot backend scaffold with health endpoint"
+        description: >
+          Create the Spring Boot 3.x application entry point (Application.java), project
+          structure, and a single GET /health endpoint returning {"status":"ok","version":"0.1.0"}.
+          Configure CORS for localhost:3000. Create application.yml with datasource config
+          pointing to Docker postgres on localhost:5432. Set up Gradle Kotlin DSL project
+          (build.gradle.kts, settings.gradle.kts, Gradle wrapper) with all required
+          dependencies: spring-boot-starter-web, spring-boot-starter-data-jpa, flyway-core,
+          postgresql driver, spring-boot-starter-validation,
+          aws-sdk-java-v2 bedrockruntime, pdfbox, poi-ooxml, lombok, hypersistence-utils.
+          Install package: gov.cms.hiring.
+        type: backend
+        model: haiku
+        depends_on: []
+        verification_command: "cd backend && ./gradlew bootRun & sleep 15 && curl -s http://localhost:8080/health"
+        result_json_schema:
+          hot_file_changes:
+            router_bean: "string | null — Spring @Bean or @Configuration snippet needed in WebConfig"
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: "string | null — Gradle Kotlin DSL dependency line if new dep needed"
+            application_yml_addition: "string | null — YAML block to add to application.yml"
+            env_var_needed: "string | null — env var name and description"
+            smoke_test_additions: "string | null — new smoke test lines to append"
+
+      - id: p0a-frontend-scaffold
+        title: "Vite + React + TypeScript frontend scaffold"
+        description: >
+          Scaffold a Vite 5 + React 18 + TypeScript project with Tailwind CSS configured.
+          Create a hello-world page at / showing "CMS Hiring POC". Configure Vite dev server
+          to proxy /api requests to http://localhost:8080 (Spring Boot port). Install
+          react-router-dom, axios, @tanstack/react-query, react-hook-form, react-dropzone.
+          Create the base App.tsx with a single placeholder route.
+          Create frontend/src/types/index.ts with empty export as placeholder.
+        type: frontend
+        model: haiku
+        depends_on: []
+        verification_command: "cd frontend && npm install && npm run build 2>&1 | tail -5"
+        result_json_schema:
+          hot_file_changes:
+            app_tsx_route: "string | null — JSX route element to add to App.tsx"
+            nav_item: "string | null — nav item JSX to add to the nav component"
+            router_bean: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: null
+
+      - id: p0a-db-flyway
+        title: "Flyway migration config and V1 baseline migration"
+        description: >
+          Configure Flyway for PostgreSQL in application.yml (spring.flyway.enabled=true,
+          locations=classpath:db/migration). Create V1__init.sql as an empty baseline migration
+          (comment only — no tables yet; subsequent waves add tables). Verify Flyway runs
+          cleanly on startup and sets the baseline. The datasource in application.yml should
+          point to the Docker postgres container: jdbc:postgresql://localhost:5432/cms_hiring.
+        type: backend
+        model: haiku
+        depends_on:
+          - p0a-backend-scaffold
+        verification_command: "cd backend && ./gradlew bootRun & sleep 15 && curl -s http://localhost:8080/health"
+        result_json_schema:
+          hot_file_changes:
+            application_yml_addition: "spring.flyway config block"
+            env_var_needed: "DATABASE_URL — jdbc:postgresql://localhost:5432/cms_hiring"
+            router_bean: null
+            gradle_dependency: null
+            app_tsx_route: null
+            nav_item: null
+            smoke_test_additions: null
+
+      - id: p0a-docker-compose
+        title: "Docker Compose with db, backend, and frontend services"
+        description: >
+          Write docker-compose.yml with three services: db (postgres:16), backend (OpenJDK 21
+          running the Spring Boot fat JAR), frontend (node:20 dev server). Ports: 5432 (db),
+          8080 (backend), 3000 (frontend). Named volume pgdata for PostgreSQL data persistence.
+          Health check on db: pg_isready. Backend depends_on db healthy. Backend Dockerfile:
+          eclipse-temurin:21-jdk-alpine, ./gradlew bootJar, run JAR. Frontend Dockerfile: node:20-alpine
+          running Vite dev server (not nginx — dev mode only per local-only scope).
+          Include .env.example with DATABASE_URL, AWS_REGION, AWS_PROFILE.
+        type: infra
+        model: haiku
+        depends_on:
+          - p0a-backend-scaffold
+          - p0a-frontend-scaffold
+          - p0a-db-flyway
+        verification_command: "docker compose up -d && sleep 20 && curl -s http://localhost:8080/health"
+        result_json_schema:
+          hot_file_changes:
+            env_var_needed: "DATABASE_URL, AWS_REGION"
+            router_bean: null
+            gradle_dependency: null
+            app_tsx_route: null
+            nav_item: null
+            application_yml_addition: null
+            smoke_test_additions: "GET /health → 200 {status: ok}"
+
+  - id: phase-0b
+    name: "Local Stack Validation"
+    model_recommendation: haiku
+    work_units:
+      - id: p0b-local-stack-verify
+        title: "Local stack validation — all containers healthy, proxy working"
+        description: >
+          Validate the full local Docker Compose stack. This is NOT a cloud deployment.
+          Steps: (1) docker compose up -d; wait for health checks. (2) Verify backend:
+          curl http://localhost:8080/health → {"status":"ok","version":"0.1.0"}.
+          (3) Verify frontend: curl http://localhost:3000 → HTML page with CMS Hiring POC.
+          (4) Verify proxy: curl http://localhost:3000/api/health → {"status":"ok"}.
+          Document the validation steps in a local-stack-verify.md in scripts/.
+          Write scripts/local-verify.sh that automates this checklist.
+          Fix any startup issues found (port conflicts, missing env vars, Flyway baseline errors).
+        type: infra
+        model: haiku
+        depends_on:
+          - p0a-docker-compose
+        verification_command: "bash scripts/local-verify.sh"
+        result_json_schema:
+          hot_file_changes:
+            env_var_needed: null
+            router_bean: null
+            gradle_dependency: null
+            app_tsx_route: null
+            nav_item: null
+            smoke_test_additions: "docker compose ps → all services healthy"
+
+  - id: wave-1
+    name: "Wave 1: CRUD End-to-End (No Auth)"
+    model_recommendation: haiku
+    work_units:
+      - id: w1-position-tracker-crud
+        title: "Position JPA entity, Flyway V2 migration, and CRUD controller"
+        description: >
+          Create the Position JPA entity (gov.cms.hiring.model.Position) with UUID id,
+          title, series, grade, PositionStatus enum, postingDate, closeDate, createdAt,
+          updatedAt. Write PositionRepository (JpaRepository), PositionService, PositionController
+          at /api/positions with GET list (filterable by status), GET by id, POST create (201),
+          PATCH update, DELETE. Create PositionDto and PositionMapper. Write Flyway migration
+          V2__create_positions.sql. Write JUnit 5 tests with Testcontainers PostgreSQL.
+          No auth required in this wave.
+        type: backend
+        model: haiku
+        depends_on:
+          - p0a-db-flyway
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.PositionControllerTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: "string | null — any WebConfig path addition needed"
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: "POST /api/positions → 201; GET /api/positions → 200"
+
+      - id: w1-pd-document-crud
+        title: "PDDocument JPA entity with JSONB content and CRUD controller"
+        description: >
+          Create PDDocument JPA entity (id UUID, positionId FK, title, content JSONB via
+          @Type(JsonBinaryType.class) from hypersistence-utils, version int, status enum,
+          createdAt, updatedAt). Define PDDocumentContent and PDSection Java records/classes.
+          Write PDDocumentRepository, PDDocumentService, PDDocumentController at /api/pd-documents.
+          Create Flyway migration V3__create_pd_documents.sql. Write JUnit 5 + Testcontainers tests.
+          Hypersistence Utils Gradle dependency required for JSONB mapping.
+        type: backend
+        model: haiku
+        depends_on:
+          - w1-position-tracker-crud
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.PDDocumentControllerTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: "implementation(\"io.hypersistence:hypersistence-utils-hibernate-63:3.7.3\")"
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: "POST /api/pd-documents → 201"
+
+      - id: w1-resume-upload-storage
+        title: "Resume multipart upload, local file storage, and stub mappings endpoint"
+        description: >
+          Create Resume JPA entity and QualificationMapping entity with Flyway V4 migration.
+          Resume fields: id UUID, positionId FK, filename, filePath, uploadDate, parsedText,
+          status enum (UPLOADED/PARSED/MAPPED). QualificationMapping fields: id, resumeId FK,
+          requirementText, matchedText, confidence double, confirmedByReviewer boolean.
+          Write ResumeController: POST /upload (multipart, stores to ./uploads/resumes/),
+          GET /{id}, GET /{id}/mappings (stub returns empty list). Return 413 if file >10MB,
+          415 if not PDF or DOCX. Write JUnit 5 + Testcontainers tests.
+        type: backend
+        model: haiku
+        depends_on:
+          - w1-position-tracker-crud
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.ResumeControllerTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: null
+            application_yml_addition: "app.upload-dir: ./uploads"
+            env_var_needed: "UPLOAD_DIR — local path for resume file storage (default: ./uploads)"
+            smoke_test_additions: "POST /api/resumes/upload → 201; POST /api/resumes/upload (large) → 413"
+
+      - id: w1-ai-stub
+        title: "AI stub endpoints with BedrockService interface and hardcoded implementation"
+        description: >
+          Define the BedrockService Java interface in gov.cms.hiring.service with two methods:
+          List<AISuggestion> suggestSection(String sectionHeading, String sectionBody);
+          List<QualificationMapping> mapResumeToRequirements(UUID resumeId, List<String> requirements).
+          Create BedrockServiceStub implementing BedrockService with hardcoded responses
+          (2 AISuggestion objects: one compliance, one specificity). Wire stub via
+          `@ConditionalOnMissingBean(BedrockServiceImpl.class)` — no `@Primary` on the stub.
+          Create AIController at /api/ai with POST /suggest-section.
+          Wave 4 will replace the stub implementation with real Bedrock calls.
+          Write JUnit 5 tests verifying stub returns 2 suggestions.
+        type: ai
+        model: haiku
+        depends_on:
+          - p0a-backend-scaffold
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.AIControllerTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: "POST /api/ai/suggest-section → 200 with array >= 1 item"
+
+      - id: w1-position-tracker-ui
+        title: "Position Tracker UI — list, create, and detail pages"
+        description: >
+          Create three React pages: /positions (sortable/filterable table with status badge chips),
+          /positions/new (react-hook-form create form), /positions/:id (detail view with tabs for
+          PD Documents and Resumes). Status badge colors: READY_TO_POST=blue, POSTED=teal,
+          UNDER_REVIEW=gold, CERTIFICATE_ISSUED=green, CLOSED=gray. Fetch data with
+          @tanstack/react-query calling /api/positions. Add sidebar Nav component.
+          Backend field names are camelCase (postingDate, closeDate, createdAt, updatedAt).
+        type: frontend
+        model: haiku
+        depends_on:
+          - w1-position-tracker-crud
+          - p0a-frontend-scaffold
+        verification_command: "cd frontend && npm run build 2>&1 | tail -5"
+        result_json_schema:
+          hot_file_changes:
+            app_tsx_route: "<Route path='/positions' element={<PositionListPage />} /><Route path='/positions/new' element={<PositionNewPage />} /><Route path='/positions/:id' element={<PositionDetailPage />} />"
+            nav_item: "<NavItem href='/positions' label='Positions' />"
+            router_bean: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: null
+
+      - id: w1-pd-editor-ui
+        title: "PD Editor UI — section editor with AI suggestion stub"
+        description: >
+          Create React page at /positions/:id/pd/:pdId with section-by-section editor.
+          Each section: editable heading, body textarea, "Get AI Suggestions" button calling
+          POST /api/ai/suggest-section. Suggestions rendered as clickable pills — click replaces
+          body with suggestion.suggested. ai_reviewed indicator icon and reviewer_approved checkbox
+          per section. Use PDSection and AISuggestion types from frontend/src/types/index.ts.
+        type: frontend
+        model: haiku
+        depends_on:
+          - w1-pd-document-crud
+          - w1-ai-stub
+          - w1-position-tracker-ui
+        verification_command: "cd frontend && npm run build 2>&1 | tail -5"
+        result_json_schema:
+          hot_file_changes:
+            app_tsx_route: "<Route path='/positions/:id/pd/:pdId' element={<PDEditorPage />} />"
+            nav_item: null
+            router_bean: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: null
+
+      - id: w1-resume-reader-ui
+        title: "Resume Reader UI — upload dropzone and stub side-by-side mapping"
+        description: >
+          Create React page at /positions/:id/resumes with react-dropzone accepting .pdf and
+          .docx. On upload, call POST /api/resumes/upload. After upload, side-by-side layout:
+          left panel shows PD requirements, right panel shows resume filename and mapping state.
+          Call GET /api/resumes/:id/mappings — Wave 1 returns empty, shows "No mappings found yet".
+          Full mapping UI (confidence badges, confirm/reject toggles) must be built now so Wave 4
+          only needs backend changes.
+        type: frontend
+        model: haiku
+        depends_on:
+          - w1-resume-upload-storage
+          - w1-position-tracker-ui
+        verification_command: "cd frontend && npm run build 2>&1 | tail -5"
+        result_json_schema:
+          hot_file_changes:
+            app_tsx_route: "<Route path='/positions/:id/resumes' element={<ResumeReaderPage />} />"
+            nav_item: null
+            router_bean: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: "POST /api/resumes/upload → 201"
+
+  - id: wave-2
+    name: "Wave 2: Validation + Error Handling"
+    model_recommendation: haiku
+    # Authentication (JWT, Spring Security) is deferred to a future phase.
+    # All endpoints are currently public. w2-jwt-auth and w2-auth-middleware have been removed.
+    work_units:
+      - id: w2-input-validation
+        title: "Jakarta Bean Validation constraints on all request DTOs"
+        description: >
+          Add Jakarta Bean Validation annotations to all existing request DTOs.
+          Position: @NotBlank title, @Size(min=3, max=200) title, @Pattern(regexp="^\\d{4}$") series,
+          @Pattern(regexp="^GS-\\d{1,2}$") grade, custom cross-field validator for closeDate >= postingDate.
+          PDDocumentContent: sections @Size(min=1). PDSection: body @Size(max=10000).
+          Resume upload: @RequestParam MultipartFile — validate size and MIME type in service layer.
+          All controllers already use @Valid — just add annotations to DTO fields.
+          spring-boot-starter-validation is already declared in build.gradle.kts.
+          Write/update tests for all validation paths using MockMvc.
+        type: backend
+        model: haiku
+        depends_on:
+          - w1-position-tracker-crud
+          - w1-pd-document-crud
+          - w1-resume-upload-storage
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.ValidationTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: null
+            application_yml_addition: null
+            env_var_needed: null
+            smoke_test_additions: "POST /api/positions {title: 'IT'} → 422; POST /api/positions {series: '22XX'} → 422"
+
+      - id: w2-error-handling
+        title: "Global @ControllerAdvice with standard JSON error envelope"
+        description: >
+          Create GlobalExceptionHandler (@RestControllerAdvice) in gov.cms.hiring.exception
+          catching MethodArgumentNotValidException (422), ResponseStatusException (various),
+          and unhandled Exception (500). Return consistent envelope:
+          {"error": {"code": "...", "message": "...", "details": [...]}}.
+          Error codes: VALIDATION_ERROR, UNAUTHORIZED, NOT_FOUND, FORBIDDEN, INTERNAL_ERROR,
+          PAYLOAD_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE. Create custom exceptions: NotFoundException,
+          ForbiddenException, UnauthorizedException. Update existing controllers to throw these.
+          Add @ExceptionHandler for MaxUploadSizeExceededException → 413.
+        type: backend
+        model: haiku
+        depends_on:
+          - p0a-backend-scaffold
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.ErrorHandlingTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: null
+            application_yml_addition: "spring.servlet.multipart.max-file-size: 10MB\nspring.servlet.multipart.max-request-size: 10MB"
+            env_var_needed: null
+            smoke_test_additions: "error response has error.code = VALIDATION_ERROR"
+
+  # Wave 3 intentionally skipped — no work units planned at this time.
+  # Wave 3 was reserved for a search/filter enhancement pass but was descoped
+  # before implementation planning began. Wave numbering kept for traceability.
+
+  - id: wave-4
+    name: "Wave 4: Live AI Integrations"
+    model_recommendation: sonnet
+    work_units:
+      - id: w4-pd-editor-bedrock
+        title: "Replace AI stub with live AWS Bedrock Claude for PD suggestions"
+        description: >
+          Create BedrockServiceImpl implementing BedrockService using
+          software.amazon.awssdk:bedrockruntime:2.x. Use InvokeModelWithResponseStreamRequest
+          with model ID anthropic.claude-3-5-sonnet-20241022-v2:0. Build Claude Messages API
+          JSON request body. Parse streamed JSON response into List<AISuggestion>.
+          System prompt encodes OHC PD writing rules (OHC-PD-001 through OHC-PD-005).
+          On any exception (timeout, SDK error, parse error), log and return empty list
+          (graceful degradation). AWS credentials from default provider chain (~/.aws/credentials).
+          AWS region from application.yml: aws.region: ${AWS_REGION:} (blank when unset).
+          BedrockServiceImpl registers only when AWS_REGION is set to a non-empty value.
+          Write JUnit 5 tests with Mockito mocking the BedrockRuntimeAsyncClient.
+        type: ai
+        model: sonnet
+        depends_on:
+          - w1-ai-stub
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.BedrockServiceTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: "implementation(\"software.amazon.awssdk:bedrockruntime\")"
+            application_yml_addition: "aws.region: ${AWS_REGION:}"
+            env_var_needed: "AWS_REGION — AWS region for Bedrock (no default; if unset, AI stub is used instead); AWS_PROFILE — AWS credentials profile"
+            smoke_test_additions: "POST /api/ai/suggest-section with 'Responsible for...' → type=compliance suggestion"
+
+      - id: w4-resume-embedding-bedrock
+        title: "Live resume parsing and qualification mapping with Bedrock Titan embeddings"
+        description: >
+          Create ResumeParserService using Apache PDFBox (pdfbox:3.x) for PDF text extraction
+          and Apache POI (poi-ooxml:5.x) for DOCX extraction. Create EmbeddingService calling
+          Amazon Titan Embeddings V2 (amazon.titan-embed-text-v2:0) via Bedrock SDK:
+          request body {"inputText": "..."} → response {"embedding": [...]}.
+          Cosine similarity in plain Java (no ML library). Confidence threshold: 0.65.
+          Replace stub GET /api/resumes/{id}/mappings with real implementation:
+          parse → embed requirements and resume paragraphs → create QualificationMapping records.
+          Add PATCH /api/qualification-mappings/{id}/confirm endpoint (public — auth deferred to future phase).
+          Write Testcontainers tests for parser; Mockito tests for embedding service.
+        type: ai
+        model: sonnet
+        depends_on:
+          - w1-resume-upload-storage
+        verification_command: "cd backend && ./gradlew test --tests \"gov.cms.hiring.ResumeParserServiceTest,gov.cms.hiring.EmbeddingServiceTest\""
+        result_json_schema:
+          hot_file_changes:
+            router_bean: null
+            app_tsx_route: null
+            nav_item: null
+            gradle_dependency: "implementation(\"org.apache.pdfbox:pdfbox:3.0.2\")"
+            application_yml_addition: null
+            env_var_needed: "AWS_REGION (already set for wave 4)"
+            smoke_test_additions: "GET /api/resumes/{id}/mappings → 200; PATCH /api/qualification-mappings/{id}/confirm → 200"
