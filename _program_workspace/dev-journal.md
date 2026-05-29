@@ -328,3 +328,52 @@
   - status: complete
 - **Verification:** 35/35 tests still passing post-regeneration
 - **Generators:** dispatched both agents in parallel; orchestrator wrote files verbatim
+
+## Scenario: Review Applicant Resume Against PD Requirements
+- **Started:** 2026-05-29 15:37
+- **Resume context:** Resumed at scenario 3 entry-point. Scenarios 1+2 complete (verified via summaries). Step-0 naming backfill: PASS (exit 0). Cross-cutting realization: design + tech-stack pipelines current per session-start log entries at 15:26.
+
+### Narrative–Postcondition Consistency Check
+- **Result:** Halted-for-user — 3 findings reached 2-of-3 majority accept threshold under the universal voting rule.
+  - F1 (2/3): 3-candidate resume list with OHC filtering visible has no postcondition.
+  - F2 (3/3): Resume passage mapping to multiple PD requirements (Medicare Part D → 2 duties) has no postcondition.
+  - F3 (3/3): Postcondition "mapping covers all 4 PD requirements" lacks a narrative producing chain.
+- **Halt site:** `narrative-consistency-check`. Detail file: `_program_workspace/halt-for-user.md`. Sentinel touched.
+- **Next:** User reads halt-for-user.md, resolves per finding via spec-edit (or `/change`), inserts `## Resolution` block, re-runs `/program`. Step 0 detects the resolution, archives the .md, and resumes by re-running S2pre against the post-edit spec.
+
+### Halt-for-user resolution (2026-05-29 15:51)
+- **Resolved:** narrative-consistency-check halt; user chose F1=b, F2=b, F3=a; spec edits applied to `specs/scenarios.md` § scenario 3 narrative.
+- **Archived:** `halt-for-user-resolved-2026-05-29T155122Z.md`.
+- **Resuming:** S2pre re-runs against the post-edit spec (scenario hash changed from `2417e5f4…` → `67bf90df…`).
+
+### Narrative–Postcondition Consistency Check (re-run after spec edit)
+- **Result:** Halted-for-user — 1 finding (down from 3) reached the 2-of-3 majority threshold.
+  - **F-counts** (B + C): per-requirement passage counts displayed in the left pane have no postcondition asserting visibility.
+  - **F-position-page** (C only): preserved for RCA, no halt under the universal rule.
+  - **F-forward** (B only): preserved for RCA, no halt; note the forward direction IS in mid-conditions, just not in postconditions.
+- **Halt site:** `narrative-consistency-check`. Detail file: `_program_workspace/halt-for-user.md`. Sentinel touched.
+- **Recommendation:** option (c) accepted-as-is — the all-4-coverage postcondition implicitly covers the count display; or (a) add a count-visibility postcondition for explicitness; or (b) remove the count detail from the narrative.
+
+### Halt-for-user resolution (2026-05-29 15:58)
+- **Resolved:** narrative-consistency-check halt #2; user chose F-counts=b; spec edit removed the count clause from the narrative.
+- **Resuming:** S2pre re-runs against the post-edit spec (scenario hash now `9f4da0c1…`). Expecting 0 findings.
+
+### Narrative–Postcondition Consistency Check (re-run #2)
+- **Result:** Halted-for-user — 3/3 unanimous flag on Medicare Part D passage click.
+- **F-mpd** (3/3): "the reader highlighted the PD requirements that passage related to" has no specific-instance postcondition; reviewers note postcondition #3 asserts the general capability but not this instance's observable.
+- **Orchestrator read:** rubric's "state implies action" + "is any narrative action's effect missing entirely" framing puts this in no-flag bucket — postcondition #3 covers the click→highlight capability the Medicare Part D click demonstrates. But universal rule says 3/3 = accept; orchestrator does not adjudicate.
+- **Recommendation:** option (c) accepted-as-is via `defer-indefinitely`, OR option (b) drop the Medicare Part D detail from the narrative to silence the auditors permanently.
+
+### Halt-for-user resolution (2026-05-29 16:07) → user pivot to option (b) (16:09)
+- **Resolved:** user initially picked defer-indefinitely; then pivoted to option (b) when warned about the halt-loop risk on the unchanged spec.
+- **Spec edit:** dropped the Medicare Part D click sentence ("She then clicked a passage in Jordan's resume about their Medicare Part D experience — the reader highlighted the PD requirements that passage related to.") from the narrative. Postcondition #3 stands on its own as the bidirectional click→highlight assertion.
+- **Resuming:** S2pre re-runs against post-edit spec; expecting 0 findings.
+
+### Narrative–Postcondition Consistency Check (re-run #3, after option-b edit)
+- **Result:** Halted-for-user — Medicare Part D flag fixed (0/3); new 2/3 flag on `strong-vs-partial-matches` postcondition.
+- **F-strength** (A+B, 2/3): postcondition #5 introduces a strong-vs-partial distinction the narrative doesn't establish. Narrative says only "color-coding to indicate relevance" generically.
+- **Recommendation:** option (a) — add a narrative sentence establishing the strong-vs-partial visual distinction; gives the postcondition a producing chain and preserves the test value.
+
+### Narrative–Postcondition Consistency Check (re-run #4, after option-a F-strength edit)
+- **Result:** No inconsistencies found (0/3 across all reviewers). After 4 spec-edit cycles, S2pre is clean. Trajectory: 8 → 5 → 3 → 2 → 0 flags. Convergent.
+- **Proceeding:** S2a derivation.
