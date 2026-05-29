@@ -345,11 +345,21 @@ function ResumeReader({
                     cursor: 'pointer',
                     padding: '10px',
                     margin: '6px 0',
-                    backgroundColor: highlighted ? '#e1f3f8' : '#f0f0f0',
-                    borderLeft: isSelected ? '4px solid #005ea2' : '4px solid transparent',
+                    backgroundColor: isSelected
+                      ? '#005ea2'
+                      : isHighlightedByPassage
+                        ? '#73b3e7'
+                        : '#f0f0f0',
+                    color: isSelected ? '#ffffff' : isHighlightedByPassage ? '#1b1b1b' : '#1b1b1b',
+                    borderLeft: isSelected
+                      ? '4px solid #162e51'
+                      : isHighlightedByPassage
+                        ? '4px solid #005ea2'
+                        : '4px solid transparent',
+                    fontWeight: highlighted ? 600 : 400,
                   }}
                 >
-                  <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: '#71767a' }}>{req.section}</strong>
+                  <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: isSelected ? '#dfe1e2' : '#71767a' }}>{req.section}</strong>
                   <p style={{ margin: '4px 0 0 0' }}>{req.text}</p>
                 </li>
               );
@@ -365,11 +375,16 @@ function ResumeReader({
               const matchStrength = reqHighlightStrength ?? overallStrength;
               const isSelected = selectedPassageId === passage.id;
               const isReqHighlighted = reqHighlightStrength !== null;
-              const bg = isReqHighlighted
-                ? (reqHighlightStrength === 'strong' ? '#94bfa2' : '#d4eed4')
-                : isSelected
-                  ? '#fff1d2'
+              const bg = isSelected
+                ? '#ffbe2e'
+                : isReqHighlighted
+                  ? (reqHighlightStrength === 'strong' ? '#4d8055' : '#94bfa2')
                   : (overallStrength === 'strong' ? '#e8f5ed' : overallStrength === 'partial' ? '#f5f9f5' : '#fafafa');
+              const fg = isSelected
+                ? '#1b1b1b'
+                : isReqHighlighted && reqHighlightStrength === 'strong'
+                  ? '#ffffff'
+                  : '#1b1b1b';
               return (
                 <li
                   key={passage.id}
@@ -387,7 +402,13 @@ function ResumeReader({
                     padding: '10px',
                     margin: '6px 0',
                     backgroundColor: bg,
-                    borderLeft: isSelected ? '4px solid #005ea2' : '4px solid transparent',
+                    color: fg,
+                    borderLeft: isSelected
+                      ? '4px solid #b86c00'
+                      : isReqHighlighted
+                        ? '4px solid #1b1b1b'
+                        : '4px solid transparent',
+                    fontWeight: isSelected || isReqHighlighted ? 600 : 400,
                   }}
                 >
                   {passage.text}
