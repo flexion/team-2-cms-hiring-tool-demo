@@ -278,3 +278,53 @@
 - **Scenario hash:** 91a2bc60278f7b5c23933ec8005e7285c4328648fffeafbfee052f67a67cbb89
 - **Constraints hash:** e48f921b079f72a7821fb22c981703bbaf5fabf4c75d85f7f05563e10edb05f1
 - **Tech-stack constraints hash:** d053f08eca474e3d9b7b1d4bc500f80be625c09db3dfd893e8e44fd347de368f
+
+---
+
+## Session: 2026-05-29 14:57 — Halted at Step 0
+
+### Plugin version
+- flexion-oea-coder v0.4.0
+
+### Step 0 sentinel cleanup
+- Removed stale: restart, done-success, done-error, halt-for-user (none existed; halt-for-user.md preserved)
+
+### Halt-for-user resolution detection
+- No `_program_workspace/halt-for-user.md` present at session start (prior was archived as `halt-for-user-resolved-2026-05-29T134343Z.md` last session). Proceeded to backfill audit.
+
+### Step 0 naming backfill audit
+- Ran `step-0-naming-backfill-audit.py` (exit 3).
+- Result: 1 violation — `web/src/main.tsx` matches `framework_entry_point_path`; SLOC 9 (≤30) but control flow detected (`if (root)` null guard) fails bootstrap-exception conjunction.
+- This is the **second** halt-for-user firing this run for the same path + halt_site. The 2026-05-29T13:43:43Z resolution chose `defer-indefinitely`, but the audit is deterministic per file content — it has no concept of "resolved-as-defer-indefinitely-stays-deferred-across-sessions". Until the null guard is removed (or the file renamed), every session start re-fires this halt.
+- Populated `_program_workspace/halt-for-user.md` per Phase 5.2 template with `halt_site: "step-0-naming-backfill-violation"`. Recommended option (b): remove the null guard. The non-null assertion `document.getElementById('root')!` is functionally equivalent and eliminates module-level control flow, permanently exempting the file via the bootstrap-exception property test.
+- Appended `halt-for-user` log entry at 2026-05-29T14:57:08Z (line 100).
+- Touched `_program_workspace/halt-for-user` sentinel.
+
+**Halted — awaiting user adjudication. Watcher exits 4.**
+
+## Scenario: Review Applicant Resume Against PD Requirements
+- **Started:** 2026-05-29 11:21
+- **Resumed after:** halt-for-user resolution (change-session-applied) — main.tsx null guard replaced with logical-AND short-circuit; step-0 backfill audit now passes (exit 0)
+
+### Resume Context
+- Completed scenarios: View Active Hiring Pipeline (2026-05-28T22:15Z), Draft and Refine PD with LLM Assistance (2026-05-29T14:21Z)
+- Module structure: 5 modules across 5 axes (HR Specialist role, programmatic, internal, external LLM, composition_root)
+- Tests: 35/35 passing on resume
+- Module cache: rewritten post-resolution with main.tsx new hash (5/5 entries clean)
+
+### Step 1.5: Cross-Cutting Constraint Realization
+- Computed canonical hashes: design=28d55a08…, tech-stack=1247bdf9…
+- Test file markers carry stale hashes from May-29 prior session: design=e48f921b…, tech-stack=d053f08e…
+- Idempotency check FAILS for both pipelines (marker mismatch). Spec content unchanged since 2026-05-28.
+- Decision: regenerate both pipelines so markers align with canonical algorithm + emit fresh cross-cutting-realization log entries.
+
+### Step 1.5 — Cross-Cutting Realization (regeneration)
+- **design pipeline:** regenerated web/test/design-constraints.test.tsx with canonical hash 28d55a08…
+  - 6 realized (Brand header, modal close button, Escape dismiss, detail page return link, nav header, pipeline default view)
+  - 5 unrealized (Public Sans CSS, position selection from list, accept/reject/loading indicators — all temporal/feature-specific)
+  - status: partial
+- **tech-stack pipeline:** regenerated web/test/tech-stack-constraints.test.ts with canonical hash 1247bdf9…
+  - 14 realized (12 dependency presence/absence + 2 main.tsx imports)
+  - status: complete
+- **Verification:** 35/35 tests still passing post-regeneration
+- **Generators:** dispatched both agents in parallel; orchestrator wrote files verbatim

@@ -5,6 +5,4 @@ import { createRoot } from 'react-dom/client';
 import HRSpecialist from './hr-specialist';
 
 const root = document.getElementById('root');
-if (root) {
-  createRoot(root).render(<HRSpecialist />);
-}
+root && createRoot(root).render(<HRSpecialist />);
