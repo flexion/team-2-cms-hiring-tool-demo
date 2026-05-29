@@ -5,6 +5,8 @@ export const implementedScenarios = new Set([
   'View Active Hiring Pipeline',
   'Programmatic mirror of "View Active Hiring Pipeline"',
   'Draft and Refine a Position Description with LLM Assistance',
+  'Review Applicant Resume Against PD Requirements',
+  'Programmatic mirror of "Review Applicant Resume Against PD Requirements"',
 ]);
 
 export interface AdapterContext {
@@ -32,6 +34,16 @@ export async function setup(scenarioName: string, groupLabel: string): Promise<A
     }
     return { container, session };
   }
+  if (scenarioName === 'Review Applicant Resume Against PD Requirements') {
+    const { setupPositionDetail, openResumeReader, clickPDRequirement } = await import('./test-driver');
+    const session = await signInAsHRSpecialist();
+    const { container } = await setupPositionDetail(session, 'Health Insurance Specialist');
+    await openResumeReader(container, 'Jordan Mitchell');
+    if (groupLabel.includes('Mid-conditions')) {
+      await clickPDRequirement(container, 0);
+    }
+    return { container, session };
+  }
   throw new Error(`No setup for scenario: ${scenarioName}`);
 }
 
@@ -46,6 +58,9 @@ export async function verify(
   }
   if (scenarioName === 'Draft and Refine a Position Description with LLM Assistance') {
     return verifyPDDraft(ctx, groupLabel, postcondition);
+  }
+  if (scenarioName === 'Review Applicant Resume Against PD Requirements') {
+    return verifyResumeReview(ctx, groupLabel, postcondition);
   }
   throw new Error(`No verifier for scenario: ${scenarioName}`);
 }
@@ -168,6 +183,103 @@ async function verifyPDDraft(ctx: AdapterContext, groupLabel: string, postcondit
   fn();
 }
 
+async function verifyResumeReview(ctx: AdapterContext, groupLabel: string, postcondition: string): Promise<void> {
+  const { container } = ctx;
+  const { clickResumePassage } = await import('./test-driver');
+
+  const verifiers: Record<string, () => void | Promise<void>> = {
+    'Maria sees highlighted passages in the resume pane that relate to the selected PD requirement.': () => {
+      const resumePane = container.querySelector('[data-testid="resume-pane"]');
+      if (!resumePane) throw new Error('Resume pane not found');
+      const highlighted = resumePane.querySelectorAll('[data-testid="resume-passage"][data-highlighted="true"]');
+      if (highlighted.length === 0) {
+        throw new Error('No highlighted passages found after clicking PD requirement');
+      }
+    },
+    'Maria sees color-coding indicating the strength or category of the match.': () => {
+      const resumePane = container.querySelector('[data-testid="resume-pane"]');
+      if (!resumePane) throw new Error('Resume pane not found');
+      const highlighted = resumePane.querySelectorAll('[data-testid="resume-passage"][data-highlighted="true"]');
+      if (highlighted.length === 0) {
+        throw new Error('No highlighted passages found');
+      }
+      let hasStrength = false;
+      for (const p of highlighted) {
+        const strength = p.getAttribute('data-match-strength');
+        if (strength === 'strong' || strength === 'partial') hasStrength = true;
+      }
+      if (!hasStrength) {
+        throw new Error('No match-strength color-coding found on highlighted passages');
+      }
+    },
+    'Maria sees the resume reader with the PD requirements in the left pane.': () => {
+      const leftPane = container.querySelector('[data-testid="pd-requirements-pane"]');
+      if (!leftPane) throw new Error('PD requirements pane not found');
+      const requirements = leftPane.querySelectorAll('[data-testid="pd-requirement"]');
+      if (requirements.length === 0) throw new Error('No PD requirements rendered');
+    },
+    'Maria sees Jordan Mitchell’s resume content in the right pane.': () => {
+      verifyResumePane(container);
+    },
+    "Maria sees Jordan Mitchell's resume content in the right pane.": () => {
+      verifyResumePane(container);
+    },
+    'Maria sees that clicking a resume passage highlights the related PD requirements in the left pane.': async () => {
+      await clickResumePassage(container, 0);
+      const leftPane = container.querySelector('[data-testid="pd-requirements-pane"]');
+      if (!leftPane) throw new Error('PD requirements pane not found');
+      const highlightedReqs = leftPane.querySelectorAll('[data-testid="pd-requirement"][data-highlighted="true"]');
+      if (highlightedReqs.length === 0) {
+        throw new Error('No PD requirements highlighted after clicking a resume passage');
+      }
+    },
+    'Maria sees that the bidirectional mapping covers all 4 PD requirements.': () => {
+      const leftPane = container.querySelector('[data-testid="pd-requirements-pane"]');
+      if (!leftPane) throw new Error('PD requirements pane not found');
+      const requirements = leftPane.querySelectorAll('[data-testid="pd-requirement"]');
+      if (requirements.length !== 4) {
+        throw new Error(`Expected 4 PD requirements, found ${requirements.length}`);
+      }
+      for (const r of requirements) {
+        const mapped = r.getAttribute('data-mapped-passage-count');
+        if (!mapped || Number(mapped) <= 0) {
+          throw new Error(`PD requirement "${r.textContent?.slice(0, 40)}..." has no mapped passages (data-mapped-passage-count=${mapped})`);
+        }
+      }
+    },
+    'Maria sees visual indicators distinguishing strong matches from partial matches.': () => {
+      const resumePane = container.querySelector('[data-testid="resume-pane"]');
+      if (!resumePane) throw new Error('Resume pane not found');
+      const passages = resumePane.querySelectorAll('[data-testid="resume-passage"]');
+      let hasStrong = false;
+      let hasPartial = false;
+      for (const p of passages) {
+        const strength = p.getAttribute('data-match-strength');
+        if (strength === 'strong') hasStrong = true;
+        if (strength === 'partial') hasPartial = true;
+      }
+      if (!hasStrong || !hasPartial) {
+        throw new Error(`Need both strong and partial matches; got strong=${hasStrong}, partial=${hasPartial}`);
+      }
+    },
+  };
+
+  const fn = verifiers[postcondition];
+  if (!fn) throw new Error(`No verifier for postcondition: ${postcondition}`);
+  await fn();
+}
+
+function verifyResumePane(container: HTMLElement): void {
+  const rightPane = container.querySelector('[data-testid="resume-pane"]');
+  if (!rightPane) throw new Error('Resume pane not found');
+  const passages = rightPane.querySelectorAll('[data-testid="resume-passage"]');
+  if (passages.length === 0) throw new Error('No resume passages rendered in right pane');
+  const heading = container.querySelector('[data-testid="resume-applicant-name"]');
+  if (!heading || !heading.textContent?.includes('Jordan Mitchell')) {
+    throw new Error('Resume pane does not show Jordan Mitchell as the applicant');
+  }
+}
+
 function assertPositionStatus(container: HTMLElement, title: string, status: string): void {
   const rows = container.querySelectorAll('table tbody tr');
   for (const row of rows) {
@@ -187,6 +299,21 @@ export async function impliedSetup(scenarioName: string): Promise<{ authenticate
     const token = await authenticateAPI();
     const positions = await getPositions(token);
     const position = await getPositionById(token, positions[0].id);
+    return { authenticated: true };
+  }
+  if (scenarioName === 'Review Applicant Resume Against PD Requirements') {
+    const { authenticateAPI, getPositions, getPositionById, getApplicantResumes, getResumeContent, getResumeMapping } = await import('./test-driver');
+    const token = await authenticateAPI();
+    const positions = await getPositions(token);
+    const hisPosition = positions.find(p => p.title === 'Health Insurance Specialist');
+    if (!hisPosition) throw new Error('Health Insurance Specialist position not found');
+    const detail = await getPositionById(token, hisPosition.id);
+    const resumes = await getApplicantResumes(token, hisPosition.id);
+    if (resumes.length !== 3) throw new Error(`Expected 3 resumes, got ${resumes.length}`);
+    const jordan = resumes.find(r => r.applicantName === 'Jordan Mitchell');
+    if (!jordan) throw new Error('Jordan Mitchell not in applicant resumes');
+    await getResumeContent(token, hisPosition.id, jordan.id);
+    await getResumeMapping(token, hisPosition.id, jordan.id);
     return { authenticated: true };
   }
   throw new Error(`No implied setup for scenario: ${scenarioName}`);
@@ -218,6 +345,53 @@ export async function impliedVerify(ctx: { authenticated: boolean }, scenarioNam
     const unsupported = await requestUnknownRoute(token);
     if (unsupported.status !== 404) {
       throw new Error(`Expected 404 for unsupported method, got ${unsupported.status}`);
+    }
+  }
+  if (scenarioName === 'Review Applicant Resume Against PD Requirements') {
+    const { authenticateAPI, getPositions, getApplicantResumes, getResumeContent, getResumeMapping } = await import('./test-driver');
+    const token = await authenticateAPI();
+    const positions = await getPositions(token);
+    const hisPosition = positions.find(p => p.title === 'Health Insurance Specialist');
+    if (!hisPosition) throw new Error('Health Insurance Specialist position not found');
+    const resumes = await getApplicantResumes(token, hisPosition.id);
+    const expectedNames = ['Jordan Mitchell', 'Priya Ramanathan', 'David Chen'];
+    for (const name of expectedNames) {
+      if (!resumes.some(r => r.applicantName === name)) {
+        throw new Error(`Expected resume for ${name} not found`);
+      }
+    }
+    const jordan = resumes.find(r => r.applicantName === 'Jordan Mitchell')!;
+    const content = await getResumeContent(token, hisPosition.id, jordan.id);
+    if (!Array.isArray(content.passages) || content.passages.length === 0) {
+      throw new Error('Jordan Mitchell resume has no passages');
+    }
+    const mapping = await getResumeMapping(token, hisPosition.id, jordan.id);
+    if (!Array.isArray(mapping.requirements) || mapping.requirements.length !== 4) {
+      throw new Error(`Expected 4 mapped PD requirements, got ${mapping.requirements?.length}`);
+    }
+    for (const req of mapping.requirements) {
+      if (!Array.isArray(req.passages)) {
+        throw new Error(`Requirement ${req.id} mapping missing passages array`);
+      }
+    }
+    let hasStrong = false;
+    let hasPartial = false;
+    for (const req of mapping.requirements) {
+      for (const p of req.passages) {
+        if (p.matchStrength === 'strong') hasStrong = true;
+        if (p.matchStrength === 'partial') hasPartial = true;
+      }
+    }
+    if (!hasStrong || !hasPartial) {
+      throw new Error(`Mapping must include both strong and partial matches; got strong=${hasStrong}, partial=${hasPartial}`);
+    }
+    if (!Array.isArray(mapping.passageIndex) || mapping.passageIndex.length === 0) {
+      throw new Error('Mapping missing reverse-index from passage to requirements');
+    }
+    for (const entry of mapping.passageIndex) {
+      if (!Array.isArray(entry.requirementIds) || entry.requirementIds.length === 0) {
+        throw new Error(`Passage ${entry.passageId} has no related requirements`);
+      }
     }
   }
 }

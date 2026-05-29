@@ -377,3 +377,56 @@
 ### Narrative–Postcondition Consistency Check (re-run #4, after option-a F-strength edit)
 - **Result:** No inconsistencies found (0/3 across all reviewers). After 4 spec-edit cycles, S2pre is clean. Trajectory: 8 → 5 → 3 → 2 → 0 flags. Convergent.
 - **Proceeding:** S2a derivation.
+
+## Session Resume (2026-05-29 16:24)
+- **Resumed at:** scenario 3, S2a derivation (post-S2pre clean)
+- **Tests:** 35/35 passing (confirmed prior work intact)
+- **Module structure:** 5 modules across 5 axes (HR Specialist role, programmatic, internal, external LLM, composition_root/app)
+- **Last refactoring:** Extract Module — pd-suggestions.ts extracted from hiring-pipeline.ts (Scenario 2)
+- **Module cache:** 5/5 modules clean
+- **Process log:** prior-scenario entries for scenarios 1+2; current scenario 3 in S2pre→S2a transition
+
+### S2a Derivation
+- **Working doc updated:** appended Scenario 3 implied scenarios — programmatic mirror covering 11 system-interaction verbs (navigate, list applicants, open resume reader, render PD requirements, render resume content, compute mapping, select PD requirement, highlight passages, indicate match strength, select passage, highlight requirements); Non-develop infrastructure block listing auth (tech-stack non-boundary), persistence (tech-stack non-boundary), llm-service (external boundary, EXTENDS scenario 2 realization with mapResumeToRequirements operation).
+- **Distribution:** No distinct narrative time-shift signal; same-session continuity from prior scenarios.
+
+### Derivation Audit (3 agents)
+- **Agents launched:** 3 (A, B, C)
+- **Verdict:** halted-for-user — 6 union gaps reach 2-of-3 majority
+  - 5 missing tech-stack mode-of-interaction concerns: ui-framework (3/3), routing (3/3), styling (2/3), components (2/3), icons (2/3)
+  - 1 reclassification: auth → translation-only (2/3, B+C)
+- **Singleton findings preserved (no halt):** fonts (A only), markdown-editor (C only)
+- **Halt site:** `derivation-audit`. Detail file: `_program_workspace/halt-for-user.md`. Sentinel touched.
+- **Recommendation:** option (b) + (d) combined — declare project mode-of-interaction scope in `specs/tech-stack-recommendations.md` (LLM Service + persistence only) and reclassify auth as translation-only. Single-layer Vite SPA has no realistic per-mode swap for ui-framework / routing / styling / components / icons / fonts / markdown-editor; auth has Library: N/A which is structurally translation-only.
+
+**Halted — awaiting user adjudication. Watcher exits 4.**
+
+### Halt-for-user resolution (2026-05-29 17:03)
+- **Resolved:** derivation-audit halt; user chose option (b)+(d) combined.
+- **Spec edits:** Added Mode-of-Interaction Scope section to `specs/tech-stack-recommendations.md` declaring in-scope (LLM Service production+demonstration, Persistence production) and out-of-scope concerns (ui-framework, styling, components, routing, markdown-editor, icons, fonts). Annotated Auth row to point at the new section as translation-only.
+- **Working doc edits:** Reclassified Auth as translation-only across Scenarios 1, 2, 3 in `_program_workspace/implied-scenarios.md`. Added explicit out-of-scope note to Scenario 1 + Scenario 3 implied-infrastructure blocks listing the Vite-bundled libraries.
+- **Archived:** `halt-for-user-resolved-2026-05-29T170317Z.md`.
+
+### Derivation Audit (re-run after spec resolution)
+- **Agents launched:** 3 (A, B, C)
+- **Result:** PASS — `union_gaps_found = []`. All three reviewers converged on LLM Service + Persistence as the in-scope concerns; all three honored the Mode-of-Interaction Scope and classified the rest as out-of-scope. The reviewer-B+C "modes: production, development" listing for persistence is a contextual header (not a structural-assertion target) — the per-agent assertion blocks themselves only assert against production for non-boundary concerns; no real gap.
+- **Proceeding:** Segment loop (segment 1: Mid-conditions after Maria clicks a PD requirement; segment 2: Postconditions).
+
+## Scenario: Review Applicant Resume Against PD Requirements
+
+### Adapter Written (segment 1: Mid-conditions + segment 2 verifiers as one block)
+- **Postconditions covered:** 7 (2 mid-conditions + 5 final postconditions)
+- **Constraints:** 0 (no `### Constraints` section)
+- **Files changed:** web/test/scenario-adapter.tsx, web/test/test-driver.tsx
+- **New driver helpers:** openResumeReader, clickPDRequirement, clickResumePassage, getApplicantResumes, getResumeContent, getResumeMapping
+- **Implied scenarios:** Programmatic mirror added to implementedScenarios; impliedSetup/impliedVerify drive through HTTP via handleAPIRequest covering authenticate / list applicants / get resume content / get bidirectional mapping (forward + reverse)
+- **Structural tests:** deferred (no mode_of_interaction non-boundary axis-map entries; LLM Service is the in-scope boundary, plumbings will emerge per-layer via refactoring when business code reaches for the second operation `mapResumeToRequirements`)
+
+### Fidelity Check
+- **Result:** PASS — 7/7 checks (coverage COMPLETE; per-actor routing PASS; precondition routing PASS; role names PASS; constraint tests N/A; narrative verb coverage PASS; implied scenario adapters PASS)
+- **Compliance vote:** unanimous-up (2/2) on fidelity-check-6-post-pass site
+
+### Pre-Grow Test Run
+- **Result:** 8 failing / 35 passing — red-green confirmed
+- **Failing:** all 7 Review-Applicant-Resume tests + the programmatic-mirror implied scenario test
+- **Cause of red:** business code (resume-reader UI, applicant-resumes API endpoints, bidirectional-mapping LLM operation) does not exist yet; this is the expected red state before grow.

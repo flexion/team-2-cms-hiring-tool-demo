@@ -61,7 +61,7 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 
 | Concern | Choice | Library | Notes |
 |---|---|---|---|
-| Auth | In-memory session (no real auth) | N/A | Local demo only — no login flow. The "securely signed in" narrative signal creates the auth interface shape, but the dev implementation auto-authenticates. |
+| Auth | In-memory session (no real auth) | N/A | Local demo only — no login flow. The "securely signed in" narrative signal creates the auth interface shape, but the dev implementation auto-authenticates. **Translation-only** for mode-of-interaction purposes (see "Mode-of-Interaction Scope" below); no per-mode plumbing required. |
 
 ## Explicitly Avoided
 
@@ -77,6 +77,27 @@ Single-directory frontend SPA with a thin local dev-server layer for Bedrock acc
 | @anthropic-ai/sdk | Using AWS Bedrock Converse API — model-agnostic, managed by AWS credentials. |
 | Tailwind CSS | Replaced with USWDS for federal government compliance and accessibility. |
 | shadcn/ui | Replaced with @trussworks/react-uswds for federal-compliant components. |
+
+## Mode-of-Interaction Scope
+
+The standing facet "mode of interaction" produces structural assertions (per-mode plumbing files exist + interface parity + composition-root wiring + no stubs) for every concern in scope. This project explicitly scopes mode-of-interaction concerns to a small set, because most tech-stack libraries are co-realized in the Vite production build with no realistic per-mode swap.
+
+| Concern | In scope for mode-of-interaction? | Reason |
+|---|---|---|
+| LLM Service | Yes — production + demonstration | External boundary (declared in `specs/external-boundaries.md`); production calls AWS Bedrock, demonstration calls the locally-run mock server. |
+| Persistence | Yes — production | In-memory store today; future swap to JSON fixtures or a real database is meaningful. |
+| Auth | No — translation-only | Library column is N/A; the "in-memory session" implementation IS the realization, not a development-mode plumbing of a real auth library. Tested through its development counterpart. |
+| ui-framework (react, react-dom) | No | The Vite production bundle IS the React realization; no swap is meaningful. |
+| Styling (@uswds/uswds) | No | CSS is bundled by Vite; no per-mode swap. |
+| Components (@trussworks/react-uswds) | No | React component library bundled by Vite; no per-mode swap. |
+| Routing (react-router-dom) | No | Bundled with the Vite build; no per-mode swap. |
+| Markdown editor (@mdxeditor/editor) | No | Bundled with the Vite build; no per-mode swap. |
+| Icons (lucide-react) | No | Bundled and tree-shaken at build time; no per-mode swap. |
+| Fonts (@fontsource/public-sans) | No | CSS-imported at build time; no per-mode swap. |
+
+Implied-scenario derivation, structural test generation, gate item 2 (infrastructure log), and the SL-sc realized-concern predicate all read this scope. Concerns marked "No" are not subject to per-mode plumbing assertions; concerns marked "Yes" are.
+
+If a future scenario introduces a concern not listed here, add a row before deriving implied scenarios — `/change` is the right tool for the addition.
 
 ## Testable Constraints
 

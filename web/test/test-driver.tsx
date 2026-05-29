@@ -101,3 +101,77 @@ export async function rejectSuggestion(container: HTMLElement, index: number): P
   rejectBtn.click();
   await new Promise(resolve => setTimeout(resolve, 0));
 }
+
+export async function openResumeReader(container: HTMLElement, applicantName: string): Promise<void> {
+  const links = container.querySelectorAll('[data-testid="applicant-resume-link"]');
+  for (const link of links) {
+    if (link.textContent?.includes(applicantName)) {
+      (link as HTMLElement).click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      return;
+    }
+  }
+  throw new Error(`Applicant resume link for "${applicantName}" not found`);
+}
+
+export async function clickPDRequirement(container: HTMLElement, index: number): Promise<void> {
+  const reqs = container.querySelectorAll('[data-testid="pd-requirement"]');
+  const req = reqs[index] as HTMLElement | undefined;
+  if (!req) throw new Error(`PD requirement at index ${index} not found`);
+  req.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+export async function clickResumePassage(container: HTMLElement, index: number): Promise<void> {
+  const passages = container.querySelectorAll('[data-testid="resume-passage"]');
+  const passage = passages[index] as HTMLElement | undefined;
+  if (!passage) throw new Error(`Resume passage at index ${index} not found`);
+  passage.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+export interface ApplicantResumeSummary {
+  id: string;
+  applicantName: string;
+}
+
+export interface ResumeContent {
+  applicantName: string;
+  passages: { id: string; text: string }[];
+}
+
+export interface ResumeMapping {
+  requirements: {
+    id: string;
+    text: string;
+    passages: { passageId: string; matchStrength: 'strong' | 'partial' }[];
+  }[];
+  passageIndex: { passageId: string; requirementIds: string[] }[];
+}
+
+export async function getApplicantResumes(token: string, positionId: string): Promise<ApplicantResumeSummary[]> {
+  const result = handleAPIRequest(
+    'GET',
+    `/api/positions/${positionId}/applicant-resumes`,
+    { Authorization: `Bearer ${token}` },
+  );
+  return result.body as ApplicantResumeSummary[];
+}
+
+export async function getResumeContent(token: string, positionId: string, resumeId: string): Promise<ResumeContent> {
+  const result = handleAPIRequest(
+    'GET',
+    `/api/positions/${positionId}/applicant-resumes/${resumeId}`,
+    { Authorization: `Bearer ${token}` },
+  );
+  return result.body as ResumeContent;
+}
+
+export async function getResumeMapping(token: string, positionId: string, resumeId: string): Promise<ResumeMapping> {
+  const result = handleAPIRequest(
+    'GET',
+    `/api/positions/${positionId}/applicant-resumes/${resumeId}/mapping`,
+    { Authorization: `Bearer ${token}` },
+  );
+  return result.body as ResumeMapping;
+}

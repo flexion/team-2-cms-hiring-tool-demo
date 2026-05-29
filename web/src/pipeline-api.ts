@@ -1,4 +1,11 @@
-import { getPositions, getPositionById } from './internal_vs_external/hiring-pipeline';
+import {
+  getPositions,
+  getPositionById,
+  getApplicantResumes,
+  getApplicantResumeById,
+  getPDRequirements,
+  mapResumeToRequirements,
+} from './internal_vs_external/hiring-pipeline';
 
 let tokenCounter = 0;
 const activeSessions = new Map<string, { role: string }>();
@@ -28,6 +35,29 @@ export function handleAPIRequest(method: string, path: string, headers: Record<s
 
   if (method === 'GET' && path === '/api/positions') {
     return { status: 200, body: getPositions() };
+  }
+
+  const mappingMatch = path.match(/^\/api\/positions\/([^/]+)\/applicant-resumes\/([^/]+)\/mapping$/);
+  if (method === 'GET' && mappingMatch) {
+    const [, positionId, resumeId] = mappingMatch;
+    const resume = getApplicantResumeById(positionId, resumeId);
+    if (!resume) return { status: 404, body: { error: 'Resume not found' } };
+    const requirements = getPDRequirements(positionId);
+    return { status: 200, body: mapResumeToRequirements(requirements, resume) };
+  }
+
+  const resumeMatch = path.match(/^\/api\/positions\/([^/]+)\/applicant-resumes\/([^/]+)$/);
+  if (method === 'GET' && resumeMatch) {
+    const [, positionId, resumeId] = resumeMatch;
+    const resume = getApplicantResumeById(positionId, resumeId);
+    if (!resume) return { status: 404, body: { error: 'Resume not found' } };
+    return { status: 200, body: { applicantName: resume.applicantName, passages: resume.passages } };
+  }
+
+  const resumesListMatch = path.match(/^\/api\/positions\/([^/]+)\/applicant-resumes$/);
+  if (method === 'GET' && resumesListMatch) {
+    const resumes = getApplicantResumes(resumesListMatch[1]);
+    return { status: 200, body: resumes.map(r => ({ id: r.id, applicantName: r.applicantName })) };
   }
 
   const positionMatch = path.match(/^\/api\/positions\/(.+)$/);
