@@ -73,6 +73,77 @@ const CANNED_RESUME_MAPPING: Record<string, ResumeMapping> = {
       { passageId: 'p6', requirementIds: ['r4'] },
     ],
   },
+  'res-priya': {
+    requirements: [
+      {
+        id: 'r1',
+        text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.',
+        passages: [
+          { passageId: 'q1', matchStrength: 'partial' },
+          { passageId: 'q3', matchStrength: 'partial' },
+        ],
+      },
+      {
+        id: 'r2',
+        text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.',
+        passages: [],
+      },
+      {
+        id: 'r3',
+        text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.',
+        passages: [
+          { passageId: 'q3', matchStrength: 'strong' },
+          { passageId: 'q1', matchStrength: 'partial' },
+        ],
+      },
+      {
+        id: 'r4',
+        text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.',
+        passages: [
+          { passageId: 'q2', matchStrength: 'partial' },
+        ],
+      },
+    ],
+    passageIndex: [
+      { passageId: 'q1', requirementIds: ['r1', 'r3'] },
+      { passageId: 'q2', requirementIds: ['r4'] },
+      { passageId: 'q3', requirementIds: ['r1', 'r3'] },
+      { passageId: 'q4', requirementIds: [] },
+    ],
+  },
+  'res-david': {
+    requirements: [
+      {
+        id: 'r1',
+        text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.',
+        passages: [
+          { passageId: 's1', matchStrength: 'partial' },
+        ],
+      },
+      {
+        id: 'r2',
+        text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.',
+        passages: [],
+      },
+      {
+        id: 'r3',
+        text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.',
+        passages: [],
+      },
+      {
+        id: 'r4',
+        text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.',
+        passages: [
+          { passageId: 's2', matchStrength: 'partial' },
+        ],
+      },
+    ],
+    passageIndex: [
+      { passageId: 's1', requirementIds: ['r1'] },
+      { passageId: 's2', requirementIds: ['r4'] },
+      { passageId: 's3', requirementIds: [] },
+    ],
+  },
 };
 
 export function mapResumeToRequirements(
