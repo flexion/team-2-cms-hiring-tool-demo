@@ -64,7 +64,7 @@ CMS OIT BOG staff managing federal job postings face three critical gaps:
                      ▼
 ┌─────────────────────────────────────────────────────────┐
 │              PostgreSQL 16 Database                      │
-│  (JSONB for PD document content, vector-free mapping)   │
+│  (Normalized schema with pd_sections table)             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -76,7 +76,7 @@ CMS OIT BOG staff managing federal job postings face three critical gaps:
 - Color-coded status badges for quick pipeline visibility
 
 **PD Editor (Working Copy Editor)**
-- Section-by-section editing with JSONB storage
+- Section-by-section editing with normalized section storage
 - "Get AI Suggestions" button per section → Claude analyzes against OHC rules
 - Suggestion pills (compliance, clarity, specificity) → click to accept
 - Reviewer approval workflow (aiReviewed flag + reviewerApproved checkbox)
@@ -102,7 +102,6 @@ CMS OIT BOG staff managing federal job postings face three critical gaps:
 | Database            | PostgreSQL 16                                |
 | LLM                 | AWS Bedrock Claude 3.5 Sonnet v2            |
 | Embeddings          | AWS Bedrock Titan Embeddings V2             |
-| JSONB Mapping       | Hypersistence Utils (hibernate-63)          |
 | PDF Parsing         | Apache PDFBox 3.x                            |
 | DOCX Parsing        | Apache POI (poi-ooxml 5.x)                  |
 | Containerization    | Docker + docker compose (local dev only)    |
@@ -116,7 +115,9 @@ CMS OIT BOG staff managing federal job postings face three critical gaps:
 ### 3.1 Entity Relationship Diagram
 
 ```
-positions (1) ──┬──< (N) pd_documents
+positions (1) ──┬──< (N) pd_documents ──< (N) pd_sections
+                │                               │
+                │                               └──< (N) ai_suggestions
                 │
                 └──< (N) resumes
                            │
@@ -146,7 +147,6 @@ CREATE TABLE pd_documents (
     id UUID PRIMARY KEY,
     position_id UUID NOT NULL REFERENCES positions(id) ON DELETE CASCADE,
     title VARCHAR(300) NOT NULL,
-    content JSONB NOT NULL,  -- PDDocumentContent type
     version INT NOT NULL DEFAULT 1,
     status VARCHAR(20) DEFAULT 'DRAFT',
     created_at TIMESTAMP,
@@ -154,27 +154,37 @@ CREATE TABLE pd_documents (
 );
 ```
 
-**PDDocumentContent (JSONB structure)**
-```typescript
-{
-  sections: [
-    {
-      id: "client-generated-uuid",
-      heading: "Introduction",
-      body: "Position description text...",
-      suggestions: [
-        {
-          type: "compliance" | "clarity" | "specificity",
-          original: "original phrase",
-          suggested: "improved phrase",
-          ruleReference: "OHC-PD-001"
-        }
-      ],
-      aiReviewed: false,
-      reviewerApproved: false
-    }
-  ]
-}
+**PDSection**
+```sql
+CREATE TABLE pd_sections (
+    id UUID PRIMARY KEY,
+    pd_document_id UUID NOT NULL REFERENCES pd_documents(id) ON DELETE CASCADE,
+    heading VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    sort_order INT NOT NULL,
+    ai_reviewed BOOLEAN DEFAULT FALSE,
+    reviewer_approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX idx_pd_sections_document ON pd_sections(pd_document_id, sort_order);
+```
+
+**AISuggestion**
+```sql
+CREATE TABLE ai_suggestions (
+    id UUID PRIMARY KEY,
+    pd_section_id UUID NOT NULL REFERENCES pd_sections(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL,  -- 'compliance', 'clarity', or 'specificity'
+    original_text TEXT NOT NULL,
+    suggested_text TEXT NOT NULL,
+    rule_reference VARCHAR(50),
+    accepted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP
+);
+
+CREATE INDEX idx_ai_suggestions_section ON ai_suggestions(pd_section_id);
 ```
 
 **Resume**
@@ -204,14 +214,17 @@ CREATE TABLE qualification_mappings (
 
 ### 3.3 Design Decisions
 
-**Q: Why JSONB for PD content instead of a sections table?**
-- **A:** Section structure is highly variable and edited as a unit. JSONB avoids ORM N+1 queries, simplifies section ordering, and enables atomic updates of the entire document. AI suggestions are transient (not historical audit items), so they live in-document rather than in a suggestions table.
+**Q: Why normalized schema for PD sections instead of JSONB?**
+- **A:** While JSONB simplifies atomic updates, a normalized schema provides better data integrity, enables more efficient queries for AI suggestions, supports proper relational constraints, and aligns with traditional database design principles. The potential N+1 query issue can be mitigated with proper eager loading strategies (e.g., `@EntityGraph` or fetch joins). Section ordering is handled via a `sort_order` column.
+
+**Q: Why separate table for AI suggestions instead of embedded in sections?**
+- **A:** AI suggestions may need to be queried independently (e.g., "show all pending suggestions"), tracked historically for analytics, or bulk-managed. A separate table provides flexibility for future features like suggestion versioning, acceptance tracking, and analytics on which rules are most frequently violated.
 
 **Q: Why no vector extension (pgvector) for embeddings?**
 - **A:** This is a local POC with <100 expected positions/resumes. Cosine similarity in-memory is sufficient. pgvector would add deployment complexity (extension installation, index tuning) with no performance benefit at this scale.
 
-**Q: Why separate Resume and QualificationMapping tables instead of JSONB mappings?**
-- **A:** Mappings require individual PATCH operations for reviewer confirmation. Storing them as rows enables simple `UPDATE qualification_mappings SET confirmed_by_reviewer = true WHERE id = ?` without full document deserialization/reserialize cycles.
+**Q: Why separate Resume and QualificationMapping tables?**
+- **A:** Mappings require individual PATCH operations for reviewer confirmation. Storing them as rows enables simple `UPDATE qualification_mappings SET confirmed_by_reviewer = true WHERE id = ?` without complex document deserialization/reserialize cycles.
 
 ---
 
@@ -462,7 +475,7 @@ public record CreatePositionRequest(
 
 **Integration Tests (Testcontainers):**
 - Full Spring Boot context with PostgreSQL container
-- JPA entity persistence and JSONB round-trip
+- JPA entity persistence and relationships (cascade, eager loading)
 - Flyway migration execution
 - Controller MockMvc tests hitting real database
 
@@ -669,17 +682,19 @@ This POC explicitly excludes:
 
 **Trade-off:** Longer build times than Node.js, but Gradle caching mitigates this for incremental builds.
 
-### 10.3 Why JSONB for PD Content?
+### 10.3 Why Normalized Schema for PD Content?
 
-**Decision:** Store PD sections as JSONB in `pd_documents.content` column instead of separate `pd_sections` table.
+**Decision:** Store PD sections in a separate `pd_sections` table with a foreign key to `pd_documents`, and AI suggestions in an `ai_suggestions` table.
 
 **Rationale:**
-- Sections always loaded/saved together (no independent section queries)
-- Avoids N+1 query problem (loading document + 10 sections = 11 queries with separate table)
-- Simplifies section ordering (array index vs `ORDER BY sort_order` with gap management)
-- AI suggestions are transient (not audit items), so embedding them in-document is cleaner
+- Provides proper relational constraints and data integrity
+- Enables efficient queries for AI suggestions and section-level operations
+- Supports future features like section-level permissions, version history, and analytics
+- Aligns with database normalization best practices
+- N+1 query concerns can be addressed with proper eager loading (`@EntityGraph`, fetch joins)
+- Section ordering via `sort_order` column is straightforward and allows for easy reordering
 
-**Trade-off:** Can't query "all sections with compliance suggestions" without full-table scan, but POC scale (<100 positions) makes this acceptable.
+**Trade-off:** Requires more careful query optimization (eager loading) compared to single-document loads, but provides better extensibility and maintainability for a production system.
 
 ### 10.4 Why Stub AI Implementation in Wave 1?
 
@@ -820,7 +835,7 @@ This POC explicitly excludes:
 - [AWS Bedrock Developer Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/)
 - [Claude API Reference](https://docs.anthropic.com/claude/reference/)
 - [React Query Documentation](https://tanstack.com/query/latest/docs/react/overview)
-- [Hypersistence Utils (JSONB mapping)](https://github.com/vladmihalcea/hypersistence-utils)
+- [Spring Data JPA Documentation](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/)
 
 ---
 

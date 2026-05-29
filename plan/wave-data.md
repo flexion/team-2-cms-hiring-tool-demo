@@ -21,7 +21,7 @@
 
 ### Seed Positions and PD Documents via SQL and Flyway
 
-**Context:** Positions map to real OIT job series and grades from the discovery research. PD documents must have JSONB content matching the `PDDocumentContent` schema (sections array with heading + body). Include a deliberate mix of compliant and non-compliant PD text so the AI suggestion feature (wave 4) visibly fires on demo data.
+**Context:** Positions map to real OIT job series and grades from the discovery research. PD documents must have sections stored in the normalized `pd_sections` table with proper foreign key relationships. Include a deliberate mix of compliant and non-compliant PD text so the AI suggestion feature (wave 4) visibly fires on demo data.
 
 **Files to create:**
 
@@ -57,35 +57,28 @@ INSERT INTO positions (id, title, series, grade, status, posting_date, close_dat
 
 `backend/src/main/resources/db/migration/V6__seed_pd_documents.sql`:
 
-Seed 10 PD documents (one for each POSTED/UNDER_REVIEW/CERTIFICATE_ISSUED position). JSONB content should match the `PDDocumentContent` schema with a `sections` array. Include:
+Seed 10 PD documents (one for each POSTED/UNDER_REVIEW/CERTIFICATE_ISSUED position) with sections in the `pd_sections` table. Include:
 - **Non-compliant sections** with "Responsible for..." (triggers OHC-PD-001 AI suggestion)
 - **Vague specialized experience** using "example" language that OHC requires (triggers OHC-PD-003/005)
 - **Compliant sections** for contrast
 
-Example JSONB structure:
-```json
-{
-  "sections": [
-    {
-      "heading": "Position Summary",
-      "body": "Serves as a Full Stack Engineer in the Office of Information Technology (OIT), Centers for Medicare & Medicaid Services (CMS). The incumbent designs, develops, and maintains web-based applications supporting CMS healthcare data platforms.",
-      "aiReviewed": false,
-      "reviewerApproved": false
-    },
-    {
-      "heading": "Major Duties",
-      "body": "Responsible for developing and maintaining React-based frontend applications. Responsible for designing RESTful APIs using Java Spring Boot. Collaborates with DevOps teams to support CI/CD pipelines.",
-      "aiReviewed": false,
-      "reviewerApproved": false
-    },
-    {
-      "heading": "Specialized Experience",
-      "body": "At least one (1) year of specialized experience equivalent to the GS-12 grade level in the Federal service. Experience may include: developing web applications using modern JavaScript frameworks; designing and consuming REST APIs; working in an Agile software development environment.",
-      "aiReviewed": false,
-      "reviewerApproved": false
-    }
-  ]
-}
+Example SQL structure:
+```sql
+-- PD Document for Full Stack Engineer position
+INSERT INTO pd_documents (id, position_id, title, version, status, created_at, updated_at) VALUES
+  ('d0000001-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'Full Stack Engineer - GS-13', 1, 'DRAFT', NOW(), NOW());
+
+-- Sections for this PD document
+INSERT INTO pd_sections (id, pd_document_id, heading, body, sort_order, ai_reviewed, reviewer_approved, created_at, updated_at) VALUES
+  ('s0000001-0001-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000001', 'Position Summary',
+   'Serves as a Full Stack Engineer in the Office of Information Technology (OIT), Centers for Medicare & Medicaid Services (CMS). The incumbent designs, develops, and maintains web-based applications supporting CMS healthcare data platforms.',
+   1, FALSE, FALSE, NOW(), NOW()),
+  ('s0000001-0002-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000001', 'Major Duties',
+   'Responsible for developing and maintaining React-based frontend applications. Responsible for designing RESTful APIs using Java Spring Boot. Collaborates with DevOps teams to support CI/CD pipelines.',
+   2, FALSE, FALSE, NOW(), NOW()),
+  ('s0000001-0003-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000001', 'Specialized Experience',
+   'At least one (1) year of specialized experience equivalent to the GS-12 grade level in the Federal service. Experience may include: developing web applications using modern JavaScript frameworks; designing and consuming REST APIs; working in an Agile software development environment.',
+   3, FALSE, FALSE, NOW(), NOW());
 ```
 
 Create V6 with PD documents for positions 1, 2, 4, 5, 6, 8, 9, 10, 13, 14 using realistic CMS IT position content. At least 4 of the 10 PDs should have "Responsible for..." in major duties to ensure AI suggestions fire on demo data.
@@ -321,7 +314,7 @@ print(f"Total: {len(CANDIDATES)} resumes")
 ```
 
 **Files to modify:**
-- `backend/src/main/resources/db/migration/V6__seed_pd_documents.sql` — hand-authored SQL with JSONB `content` column
+- `backend/src/main/resources/db/migration/V6__seed_pd_documents.sql` — hand-authored SQL inserting into `pd_documents` and `pd_sections` tables
 
 **Running the seed:**
 ```bash
@@ -363,7 +356,7 @@ assert_gte "$RESUME_COUNT" 10 "Resume count >= 10"
     "env_var_needed": null,
     "smoke_test_additions": "POSITION_COUNT >= 20; RESUME_COUNT >= 10"
   },
-  "notes": "V5 and V6 are SQL-only Flyway migrations. V7 is generated by seed-resumes.py — run the script before starting the backend, or the V7 migration file will be missing and Flyway will fail. The 4 non-compliant PD sections (containing 'Responsible for...') are intentional — they exist to ensure the AI suggestion feature fires visibly during demo."
+  "notes": "V5 and V6 are SQL-only Flyway migrations. V6 seeds both pd_documents and pd_sections tables with realistic content. V7 is generated by seed-resumes.py — run the script before starting the backend, or the V7 migration file will be missing and Flyway will fail. The 4 non-compliant PD sections (containing 'Responsible for...') are intentional — they exist to ensure the AI suggestion feature fires visibly during demo."
 }
 ```
 

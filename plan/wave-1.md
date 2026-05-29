@@ -107,9 +107,9 @@ CREATE TABLE positions (
 
 ## Work Unit: w1-pd-document-crud
 
-### Backend — PDDocument Entity with JSONB Content
+### Backend — PDDocument Entity with Normalized Sections
 
-**Data model context:** PD documents are position descriptions submitted to OHC. Each document has structured sections (introduction, specialized experience, KSAs, etc.). The JSONB `content` column stores the full document as structured JSON, enabling section-by-section editing and AI suggestion tracking without requiring a separate sections table.
+**Data model context:** PD documents are position descriptions submitted to OHC. Each document has structured sections (introduction, specialized experience, KSAs, etc.) stored in a separate `pd_sections` table with a foreign key relationship. This normalized approach enables better data integrity, efficient querying, and proper relational constraints. AI suggestions are stored in a separate `ai_suggestions` table linked to sections.
 
 **Files to create:**
 
@@ -117,8 +117,6 @@ CREATE TABLE positions (
 ```java
 @Entity
 @Table(name = "pd_documents")
-// Note: Hibernate 6 (hypersistence-utils-hibernate-63) no longer uses @TypeDef.
-// Use only the field-level @Type annotation — no class-level annotation needed.
 public class PDDocument {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -130,9 +128,9 @@ public class PDDocument {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "jsonb")
-    @Type(JsonBinaryType.class)
-    private PDDocumentContent content;  // Serialized as JSONB
+    @OneToMany(mappedBy = "pdDocument", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("sortOrder ASC")
+    private List<PDSection> sections = new ArrayList<>();
 
     @Column(nullable = false)
     private int version = 1;
@@ -148,22 +146,100 @@ public class PDDocument {
 }
 ```
 
-`PDDocumentContent` and `PDSection` as Java records or Lombok-annotated classes in the `dto` package (not entities). Must be Jackson-serializable:
+`backend/src/main/java/gov/cms/hiring/model/PDSection.java`:
+```java
+@Entity
+@Table(name = "pd_sections")
+public class PDSection {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pd_document_id", nullable = false)
+    private PDDocument pdDocument;
+
+    @Column(nullable = false, length = 200)
+    private String heading;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String body;
+
+    @Column(nullable = false)
+    private Integer sortOrder;
+
+    @Column(nullable = false)
+    private Boolean aiReviewed = false;
+
+    @Column(nullable = false)
+    private Boolean reviewerApproved = false;
+
+    @OneToMany(mappedBy = "pdSection", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AISuggestion> suggestions = new ArrayList<>();
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+}
+```
+
+`backend/src/main/java/gov/cms/hiring/model/AISuggestion.java`:
+```java
+@Entity
+@Table(name = "ai_suggestions")
+public class AISuggestion {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pd_section_id", nullable = false)
+    private PDSection pdSection;
+
+    @Column(nullable = false, length = 20)
+    private String type;  // 'compliance', 'clarity', or 'specificity'
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String originalText;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String suggestedText;
+
+    @Column(length = 50)
+    private String ruleReference;
+
+    @Column(nullable = false)
+    private Boolean accepted = false;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+DTOs for API responses in `dto` package:
 
 ```java
 // gov.cms.hiring.dto.PDSectionDto
 public record PDSectionDto(
-    String id,          // client-generated UUID string
+    UUID id,
     String heading,
     String body,
+    Integer sortOrder,
     List<AISuggestionDto> suggestions,
-    boolean aiReviewed,
-    boolean reviewerApproved
+    Boolean aiReviewed,
+    Boolean reviewerApproved
 ) {}
 
-// gov.cms.hiring.dto.PDDocumentContentDto
-public record PDDocumentContentDto(
-    List<PDSectionDto> sections
+// gov.cms.hiring.dto.AISuggestionDto
+public record AISuggestionDto(
+    UUID id,
+    String type,
+    String originalText,
+    String suggestedText,
+    String ruleReference,
+    Boolean accepted
 ) {}
 ```
 
@@ -185,28 +261,47 @@ CREATE TABLE pd_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     position_id UUID NOT NULL REFERENCES positions(id) ON DELETE CASCADE,
     title VARCHAR(300) NOT NULL,
-    content JSONB NOT NULL DEFAULT '{"sections":[]}',
     version INT NOT NULL DEFAULT 1,
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE pd_sections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pd_document_id UUID NOT NULL REFERENCES pd_documents(id) ON DELETE CASCADE,
+    heading VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    sort_order INT NOT NULL,
+    ai_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+    reviewer_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE ai_suggestions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pd_section_id UUID NOT NULL REFERENCES pd_sections(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL,
+    original_text TEXT NOT NULL,
+    suggested_text TEXT NOT NULL,
+    rule_reference VARCHAR(50),
+    accepted BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE INDEX idx_pd_documents_position_id ON pd_documents(position_id);
+CREATE INDEX idx_pd_sections_document ON pd_sections(pd_document_id, sort_order);
+CREATE INDEX idx_ai_suggestions_section ON ai_suggestions(pd_section_id);
 ```
 
-**build.gradle.kts dependency required** (note in result.json):
-```kotlin
-implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
-```
-
-`backend/src/test/java/gov/cms/hiring/PDDocumentControllerTest.java` — Testcontainers tests covering JSONB round-trip, section creation, content patch.
+`backend/src/test/java/gov/cms/hiring/PDDocumentControllerTest.java` — Testcontainers tests covering entity relationships, section creation, eager loading with `@EntityGraph`, and content updates.
 
 **result.json hot_file_changes:**
 ```json
 {
-  "gradle_dependency": "implementation(\"io.hypersistence:hypersistence-utils-hibernate-63:3.7.3\")",
-  "smoke_test_additions": "POST /api/pd-documents → 201"
+  "gradle_dependency": null,
+  "smoke_test_additions": "POST /api/pd-documents → 201\nGET /api/pd-documents/{id} → 200 with sections array"
 }
 ```
 

@@ -20,7 +20,6 @@ This application is a unified, LLM-enhanced position management workspace for CM
 | Database | PostgreSQL 16 (Docker container) |
 | LLM | AWS Bedrock (Claude 3.5 Sonnet via `anthropic.claude-3-5-sonnet-20241022-v2:0`) |
 | Embeddings | AWS Bedrock (Amazon Titan Embeddings V2 `amazon.titan-embed-text-v2:0`) |
-| JSONB mapping | Hypersistence Utils (`hypersistence-utils-hibernate-63`) |
 | PDF parsing | Apache PDFBox 3.x |
 | DOCX parsing | Apache POI (poi-ooxml 5.x) |
 | Containerization | Docker + docker compose (local dev only) |

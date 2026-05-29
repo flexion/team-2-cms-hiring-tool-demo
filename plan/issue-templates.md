@@ -44,7 +44,6 @@ This is the first work unit. Nothing exists yet. You are creating the foundation
 - `implementation("org.flywaydb:flyway-core")`, `implementation("org.flywaydb:flyway-database-postgresql")`
 - `runtimeOnly("org.postgresql:postgresql")`
 - `implementation(platform("software.amazon.awssdk:bom:2.26.12"))`, `implementation("software.amazon.awssdk:bedrockruntime")`
-- `implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")`
 - `implementation("org.apache.pdfbox:pdfbox:3.0.2")`
 - `implementation("org.apache.poi:poi-ooxml:5.2.5")`
 - `compileOnly("org.projectlombok:lombok")`, `annotationProcessor("org.projectlombok:lombok")`
@@ -395,32 +394,37 @@ cd backend && ./gradlew test --tests "gov.cms.hiring.PositionControllerTest"
 
 ### ISSUE: w1-pd-document-crud
 
-**Title:** `[wave-1] PDDocument JPA entity with JSONB content and CRUD controller`
+**Title:** `[wave-1] PDDocument JPA entity with normalized sections and CRUD controller`
 
 **Context:**
-Position CRUD is complete. `positions` table exists. You are creating the PD Document entity that stores PD drafts as JSONB. Requires `io.hypersistence:hypersistence-utils-hibernate-63:3.7.3` for `@Type(JsonBinaryType.class)`. The `PDDocumentContent` Java class (for JSONB serialization) lives in the `dto` package. Note the Gradle dependency in result.json.
+Position CRUD is complete. `positions` table exists. You are creating the PD Document entity with a normalized schema. Sections are stored in a separate `pd_sections` table with a foreign key to `pd_documents`. AI suggestions are stored in an `ai_suggestions` table with a foreign key to `pd_sections`. Use JPA relationships (`@OneToMany`, `@ManyToOne`) with proper cascade and fetch strategies.
 
 **Java Classes to Create:**
-- `gov.cms.hiring.model.PDDocument` — JPA entity with JSONB `content` column
+- `gov.cms.hiring.model.PDDocument` — JPA entity with `@OneToMany` relationship to PDSection
+- `gov.cms.hiring.model.PDSection` — JPA entity with `@ManyToOne` to PDDocument, `@OneToMany` to AISuggestion
+- `gov.cms.hiring.model.AISuggestion` — JPA entity with `@ManyToOne` to PDSection
 - `gov.cms.hiring.model.PDDocumentStatus` — enum (DRAFT, SUBMITTED, APPROVED)
-- `gov.cms.hiring.dto.PDDocumentContentDto` — JSONB value class with `List<PDSectionDto> sections`
-- `gov.cms.hiring.dto.PDSectionDto` — section with id, heading, body, suggestions, aiReviewed, reviewerApproved
-- `gov.cms.hiring.dto.AISuggestionDto` — type, original, suggested, ruleReference
-- `gov.cms.hiring.repository.PDDocumentRepository` — `findByPositionId(UUID positionId)`
+- `gov.cms.hiring.dto.PDSectionDto` — DTO for section with id, heading, body, sortOrder, suggestions, aiReviewed, reviewerApproved
+- `gov.cms.hiring.dto.AISuggestionDto` — DTO for suggestion with id, type, originalText, suggestedText, ruleReference, accepted
+- `gov.cms.hiring.repository.PDDocumentRepository` — `findByPositionId(UUID positionId)`, use `@EntityGraph` for eager loading sections
+- `gov.cms.hiring.repository.PDSectionRepository`
+- `gov.cms.hiring.repository.AISuggestionRepository`
 - `gov.cms.hiring.service.PDDocumentService`
 - `gov.cms.hiring.controller.PDDocumentController` — `@RequestMapping("/api/pd-documents")`
 
 **Flyway Migration:**
-- `V3__create_pd_documents.sql` — CREATE TABLE pd_documents with JSONB content column
+- `V3__create_pd_documents.sql` — CREATE TABLE pd_documents, pd_sections, and ai_suggestions with proper foreign keys and indexes
 
 **Test Class:**
-- `PDDocumentControllerTest.java` — Testcontainers, JSONB round-trip test
+- `PDDocumentControllerTest.java` — Testcontainers, test entity relationships, eager loading, and cascade operations
 
 **Acceptance Criteria:**
-- [ ] `content` column is type `jsonb` in PostgreSQL
-- [ ] JSONB round-trip: create with sections, retrieve, sections match exactly
+- [ ] Three tables created: `pd_documents`, `pd_sections`, `ai_suggestions`
+- [ ] Foreign key constraints properly set up with ON DELETE CASCADE
+- [ ] Indexes created on foreign key columns and sort_order
+- [ ] Entity relationships work correctly (create document with sections, sections with suggestions)
 - [ ] `position_id` FK references `positions.id` ON DELETE CASCADE
-- [ ] `GET /api/pd-documents?positionId={uuid}` filters by position
+- [ ] `GET /api/pd-documents?positionId={uuid}` filters by position and eagerly loads sections
 - [ ] All Testcontainers tests pass
 - [ ] Flyway V3 migration runs cleanly after V2
 
@@ -437,18 +441,18 @@ cd backend && ./gradlew test --tests "gov.cms.hiring.PDDocumentControllerTest"
 {
   "work_unit_id": "w1-pd-document-crud",
   "status": "complete",
-  "summary": "PDDocument entity with JSONB content, V3 migration, and CRUD controller created. JSONB round-trip verified.",
+  "summary": "PDDocument entity with normalized schema (pd_sections and ai_suggestions tables), V3 migration, and CRUD controller created. Entity relationships and eager loading verified.",
   "tests_passing": true,
   "hot_file_changes": {
     "router_bean": null,
     "app_tsx_route": null,
     "nav_item": null,
-    "gradle_dependency": "implementation(\"io.hypersistence:hypersistence-utils-hibernate-63:3.7.3\")",
+    "gradle_dependency": null,
     "application_yml_addition": null,
     "env_var_needed": null,
-    "smoke_test_additions": "POST /api/pd-documents → 201"
+    "smoke_test_additions": "POST /api/pd-documents → 201\nGET /api/pd-documents/{id} → 200 with sections array"
   },
-  "notes": null
+  "notes": "Using normalized schema with separate tables for pd_sections and ai_suggestions. No Hypersistence Utils dependency needed since we're not using JSONB."
 }
 ```
 
