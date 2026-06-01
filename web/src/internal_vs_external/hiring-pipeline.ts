@@ -37,6 +37,10 @@ const PD_DRAFTS: Record<string, PDWorkingCopy> = {
     duties: 'Designs, develops, and maintains full-stack web applications using modern frameworks. Collaborates with cross-functional teams to deliver software solutions.',
     specializedExperience: 'One year of specialized experience equivalent to the GS-12 level performing full-stack development duties including front-end and back-end implementation.',
   },
+  '4': {
+    duties: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations. Analyze and adjudicate claims, ensuring compliance with Title XVIII (Medicare) and Title XIX (Medicaid) of the Social Security Act. Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions, including formulary exceptions, prior authorization requests, and off-label use determinations. Coordinate with regional offices, state Medicaid agencies, and contracted Medicare Administrative Contractors (MACs) to resolve coverage disputes. Monitor legislative and regulatory changes affecting federal health insurance programs and update internal procedures accordingly. Prepare written determinations, correspondence, and policy guidance documents for internal and external stakeholders.',
+    specializedExperience: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act. Experience must demonstrate progressively responsible work in health insurance program administration, claims adjudication, or beneficiary services within a federal or state health agency. Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders through written correspondence, training sessions, or public-facing guidance materials. Applicants must show experience applying CMS rulings, national coverage determinations (NCDs), and local coverage determinations (LCDs) in day-to-day program operations.',
+  },
 };
 
 export function getPDWorkingCopy(positionId: string): PDWorkingCopy | undefined {
