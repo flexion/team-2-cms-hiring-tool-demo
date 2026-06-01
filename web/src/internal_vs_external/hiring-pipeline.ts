@@ -10,7 +10,7 @@ const PIPELINE_DATA: Position[] = [
   { id: '1', title: 'IT Specialist (Full Stack Engineer)', gsGrade: 'GS-13', status: 'Drafting PD', date: '2026-05-15' },
   { id: '2', title: 'Data Scientist', gsGrade: 'GS-14', status: 'In Classification Review', date: '2026-05-10' },
   { id: '3', title: 'IT Specialist (Cybersecurity)', gsGrade: 'GS-13', status: 'Posted', date: '2026-05-01' },
-  { id: '4', title: 'Health Insurance Specialist', gsGrade: 'GS-12', status: 'Cert Issued', date: '2026-04-20' },
+  { id: '4', title: 'IT Specialist (Artificial Intelligence)', gsGrade: 'GS-14', status: 'Cert Issued', date: '2026-04-20' },
   { id: '5', title: 'IT Specialist (Systems Administration)', gsGrade: 'GS-13', status: 'Interviewing', date: '2026-04-15' },
   { id: '6', title: 'Management Analyst', gsGrade: 'GS-14', status: 'Drafting PD', date: '2026-05-20' },
   { id: '7', title: 'IT Specialist (Data Management)', gsGrade: 'GS-15', status: 'In Classification Review', date: '2026-05-12' },
@@ -38,8 +38,8 @@ const PD_DRAFTS: Record<string, PDWorkingCopy> = {
     specializedExperience: 'One year of specialized experience equivalent to the GS-12 level performing full-stack development duties including front-end and back-end implementation.',
   },
   '4': {
-    duties: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations. Analyze and adjudicate claims, ensuring compliance with Title XVIII (Medicare) and Title XIX (Medicaid) of the Social Security Act. Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions, including formulary exceptions, prior authorization requests, and off-label use determinations. Coordinate with regional offices, state Medicaid agencies, and contracted Medicare Administrative Contractors (MACs) to resolve coverage disputes. Monitor legislative and regulatory changes affecting federal health insurance programs and update internal procedures accordingly. Prepare written determinations, correspondence, and policy guidance documents for internal and external stakeholders.',
-    specializedExperience: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act. Experience must demonstrate progressively responsible work in health insurance program administration, claims adjudication, or beneficiary services within a federal or state health agency. Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders through written correspondence, training sessions, or public-facing guidance materials. Applicants must show experience applying CMS rulings, national coverage determinations (NCDs), and local coverage determinations (LCDs) in day-to-day program operations.',
+    duties: 'Provide technical guidance and training to product managers, data scientists and engineers on AI/ML platform usage and best practices. Lead collaborative efforts with product owners and business stakeholders to analyze complex program requirements and identify strategic opportunities for AI/ML solutions. Collaborate with data scientists to productionize fraud prevention models, ensuring seamless transition from development to production environments while maintaining model performance, monitoring, and compliance. Design and implement security frameworks and access controls for AI/ML platforms to protect sensitive data and ensure compliance with federal regulations.',
+    specializedExperience: 'One year of specialized experience equivalent to the GS-13 level demonstrating IT-related experience in each of the following competencies: Attention to Detail, Customer Service, Oral Communication, and Problem Solving. Specialized experience must include leading the deployment and operationalization of AI/ML models in production environments, designing security and access control frameworks for AI/ML platforms handling sensitive federal data, and providing technical guidance on AI/ML platform architecture to cross-functional teams including data scientists, engineers, and business stakeholders.',
   },
 };
 
@@ -71,10 +71,10 @@ export interface ApplicantResume {
 
 const FINALIZED_PDS: Record<string, PDRequirement[]> = {
   '4': [
-    { id: 'r1', section: 'duties', text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.' },
-    { id: 'r2', section: 'duties', text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.' },
-    { id: 'r3', section: 'specialized experience', text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.' },
-    { id: 'r4', section: 'specialized experience', text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.' },
+    { id: 'r1', section: 'duties', text: 'Lead collaborative efforts with product owners and business stakeholders to analyze complex program requirements and identify strategic opportunities for AI/ML solutions.' },
+    { id: 'r2', section: 'duties', text: 'Collaborate with data scientists to productionize fraud prevention models, ensuring seamless transition from development to production environments while maintaining model performance, monitoring, and compliance.' },
+    { id: 'r3', section: 'duties', text: 'Design and implement security frameworks and access controls for AI/ML platforms to protect sensitive data and ensure compliance with federal regulations.' },
+    { id: 'r4', section: 'specialized experience', text: 'Specialized experience must include leading the deployment and operationalization of AI/ML models in production environments, and providing technical guidance on AI/ML platform architecture to cross-functional teams.' },
   ],
 };
 
@@ -89,12 +89,12 @@ const APPLICANT_RESUMES: Record<string, ApplicantResume[]> = {
       positionId: '4',
       applicantName: 'Jordan Mitchell',
       passages: [
-        { id: 'p1', text: 'Senior Health Insurance Specialist at the Centers for Medicare & Medicaid Services, FY 2022 to present, leading coverage determination reviews for Medicare Part D appeals.' },
-        { id: 'p2', text: 'Drafted policy guidance on Medicaid eligibility under Title XIX, coordinating with state agencies on implementation timelines and beneficiary communications.' },
-        { id: 'p3', text: 'Resolved complex beneficiary appeals involving Medicare Part D prescription drug coverage, including off-label use and formulary exceptions.' },
-        { id: 'p4', text: 'Delivered training to provider organizations on Medicare and Medicaid program rules, simplifying regulatory language for non-technical audiences.' },
-        { id: 'p5', text: 'Interpreted Title XVIII regulations to support coverage decisions, working with senior policy advisors and CMS legal counsel on edge cases.' },
-        { id: 'p6', text: 'Volunteered as a community advocate, helping seniors navigate Medicare enrollment options at local outreach events.' },
+        { id: 'p1', text: 'Senior ML Engineer at CMS, FY 2022 to present, leading the deployment of fraud detection models into production on AWS SageMaker, achieving 40% improvement in improper payment identification.' },
+        { id: 'p2', text: 'Designed role-based access control and encryption-at-rest frameworks for the AI/ML platform, ensuring compliance with FISMA and CMS ARS security requirements for PII/PHI data.' },
+        { id: 'p3', text: 'Collaborated with the Center for Program Integrity product owners to translate business requirements into ML pipeline specifications, identifying opportunities to apply anomaly detection to claims processing.' },
+        { id: 'p4', text: 'Provided technical training and documentation to data scientists and engineers on MLOps best practices, model versioning, and CI/CD pipelines for model promotion.' },
+        { id: 'p5', text: 'Led cross-functional team of 5 engineers and 3 data scientists to operationalize a provider risk-scoring model, managing the full lifecycle from experimentation through production monitoring and drift detection.' },
+        { id: 'p6', text: 'Mentored junior engineers on Kubernetes-based model serving infrastructure and presented AI platform architecture to CMS leadership during quarterly technology reviews.' },
       ],
     },
     {
@@ -102,10 +102,10 @@ const APPLICANT_RESUMES: Record<string, ApplicantResume[]> = {
       positionId: '4',
       applicantName: 'Priya Ramanathan',
       passages: [
-        { id: 'q1', text: 'Health Policy Analyst at a Washington-based think tank, researching Affordable Care Act marketplace dynamics and federal subsidy programs.' },
-        { id: 'q2', text: 'Co-authored published research on Medicare Advantage enrollment trends, presenting findings at academic conferences.' },
-        { id: 'q3', text: 'Worked on a Medicaid policy brief examining state-level eligibility variations across Title XIX expansion and non-expansion states.' },
-        { id: 'q4', text: 'Holds a Master of Public Policy with concentration in health policy from a top-tier school.' },
+        { id: 'q1', text: 'Machine Learning Researcher at a federal health policy institute, developing NLP models to extract structured data from unstructured Medicare claims narratives.' },
+        { id: 'q2', text: 'Published peer-reviewed research on applying transformer architectures to healthcare fraud detection, presenting findings at AAAI and KDD conferences.' },
+        { id: 'q3', text: 'Built proof-of-concept ML pipelines on cloud infrastructure (GCP Vertex AI), including automated retraining and monitoring for data drift in claims datasets.' },
+        { id: 'q4', text: 'Holds a Ph.D. in Computer Science with dissertation on federated learning approaches for privacy-preserving healthcare analytics.' },
       ],
     },
     {
@@ -113,9 +113,9 @@ const APPLICANT_RESUMES: Record<string, ApplicantResume[]> = {
       positionId: '4',
       applicantName: 'David Chen',
       passages: [
-        { id: 's1', text: 'Insurance Claims Adjuster at a regional commercial health insurer, processing claims under employer-sponsored plans.' },
-        { id: 's2', text: 'Communicated coverage decisions to enrollees and providers via phone and written correspondence, explaining benefit limitations.' },
-        { id: 's3', text: 'Earned a Bachelor of Business Administration with coursework in healthcare administration.' },
+        { id: 's1', text: 'Data Analyst at a regional health plan, building dashboards and SQL queries to support claims adjudication workflows and identify billing anomalies.' },
+        { id: 's2', text: 'Completed online certifications in Python machine learning (Coursera) and presented a pilot sentiment analysis project to department leadership.' },
+        { id: 's3', text: 'Holds a Bachelor of Science in Information Systems with coursework in database management and statistics.' },
       ],
     },
   ],

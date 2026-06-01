@@ -32,44 +32,43 @@ const CANNED_RESUME_MAPPING: Record<string, ResumeMapping> = {
     requirements: [
       {
         id: 'r1',
-        text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.',
+        text: 'Lead collaborative efforts with product owners and business stakeholders to analyze complex program requirements and identify strategic opportunities for AI/ML solutions.',
         passages: [
-          { passageId: 'p1', matchStrength: 'strong' },
-          { passageId: 'p2', matchStrength: 'strong' },
-          { passageId: 'p3', matchStrength: 'partial' },
-        ],
-      },
-      {
-        id: 'r2',
-        text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.',
-        passages: [
-          { passageId: 'p1', matchStrength: 'strong' },
           { passageId: 'p3', matchStrength: 'strong' },
-        ],
-      },
-      {
-        id: 'r3',
-        text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.',
-        passages: [
-          { passageId: 'p2', matchStrength: 'strong' },
           { passageId: 'p5', matchStrength: 'strong' },
         ],
       },
       {
-        id: 'r4',
-        text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.',
+        id: 'r2',
+        text: 'Collaborate with data scientists to productionize fraud prevention models, ensuring seamless transition from development to production environments while maintaining model performance, monitoring, and compliance.',
         passages: [
+          { passageId: 'p1', matchStrength: 'strong' },
+          { passageId: 'p5', matchStrength: 'strong' },
+        ],
+      },
+      {
+        id: 'r3',
+        text: 'Design and implement security frameworks and access controls for AI/ML platforms to protect sensitive data and ensure compliance with federal regulations.',
+        passages: [
+          { passageId: 'p2', matchStrength: 'strong' },
+        ],
+      },
+      {
+        id: 'r4',
+        text: 'Specialized experience must include leading the deployment and operationalization of AI/ML models in production environments, and providing technical guidance on AI/ML platform architecture to cross-functional teams.',
+        passages: [
+          { passageId: 'p1', matchStrength: 'strong' },
           { passageId: 'p4', matchStrength: 'strong' },
           { passageId: 'p6', matchStrength: 'partial' },
         ],
       },
     ],
     passageIndex: [
-      { passageId: 'p1', requirementIds: ['r1', 'r2'] },
-      { passageId: 'p2', requirementIds: ['r1', 'r3'] },
-      { passageId: 'p3', requirementIds: ['r1', 'r2'] },
+      { passageId: 'p1', requirementIds: ['r2', 'r4'] },
+      { passageId: 'p2', requirementIds: ['r3'] },
+      { passageId: 'p3', requirementIds: ['r1'] },
       { passageId: 'p4', requirementIds: ['r4'] },
-      { passageId: 'p5', requirementIds: ['r3'] },
+      { passageId: 'p5', requirementIds: ['r1', 'r2'] },
       { passageId: 'p6', requirementIds: ['r4'] },
     ],
   },
@@ -77,37 +76,37 @@ const CANNED_RESUME_MAPPING: Record<string, ResumeMapping> = {
     requirements: [
       {
         id: 'r1',
-        text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.',
+        text: 'Lead collaborative efforts with product owners and business stakeholders to analyze complex program requirements and identify strategic opportunities for AI/ML solutions.',
         passages: [
           { passageId: 'q1', matchStrength: 'partial' },
-          { passageId: 'q3', matchStrength: 'partial' },
         ],
       },
       {
         id: 'r2',
-        text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.',
-        passages: [],
-      },
-      {
-        id: 'r3',
-        text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.',
+        text: 'Collaborate with data scientists to productionize fraud prevention models, ensuring seamless transition from development to production environments while maintaining model performance, monitoring, and compliance.',
         passages: [
-          { passageId: 'q3', matchStrength: 'strong' },
-          { passageId: 'q1', matchStrength: 'partial' },
+          { passageId: 'q3', matchStrength: 'partial' },
+          { passageId: 'q2', matchStrength: 'partial' },
         ],
       },
       {
+        id: 'r3',
+        text: 'Design and implement security frameworks and access controls for AI/ML platforms to protect sensitive data and ensure compliance with federal regulations.',
+        passages: [],
+      },
+      {
         id: 'r4',
-        text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.',
+        text: 'Specialized experience must include leading the deployment and operationalization of AI/ML models in production environments, and providing technical guidance on AI/ML platform architecture to cross-functional teams.',
         passages: [
-          { passageId: 'q2', matchStrength: 'partial' },
+          { passageId: 'q3', matchStrength: 'partial' },
+          { passageId: 'q1', matchStrength: 'partial' },
         ],
       },
     ],
     passageIndex: [
-      { passageId: 'q1', requirementIds: ['r1', 'r3'] },
-      { passageId: 'q2', requirementIds: ['r4'] },
-      { passageId: 'q3', requirementIds: ['r1', 'r3'] },
+      { passageId: 'q1', requirementIds: ['r1', 'r4'] },
+      { passageId: 'q2', requirementIds: ['r2'] },
+      { passageId: 'q3', requirementIds: ['r2', 'r4'] },
       { passageId: 'q4', requirementIds: [] },
     ],
   },
@@ -115,31 +114,29 @@ const CANNED_RESUME_MAPPING: Record<string, ResumeMapping> = {
     requirements: [
       {
         id: 'r1',
-        text: 'Administer health insurance programs in accordance with CMS guidelines, including Medicare and Medicaid coverage determinations.',
-        passages: [
-          { passageId: 's1', matchStrength: 'partial' },
-        ],
+        text: 'Lead collaborative efforts with product owners and business stakeholders to analyze complex program requirements and identify strategic opportunities for AI/ML solutions.',
+        passages: [],
       },
       {
         id: 'r2',
-        text: 'Review and process beneficiary appeals related to Medicare Part D prescription drug coverage decisions.',
+        text: 'Collaborate with data scientists to productionize fraud prevention models, ensuring seamless transition from development to production environments while maintaining model performance, monitoring, and compliance.',
         passages: [],
       },
       {
         id: 'r3',
-        text: 'Three years of specialized experience interpreting federal health insurance regulations including Title XVIII and Title XIX of the Social Security Act.',
+        text: 'Design and implement security frameworks and access controls for AI/ML platforms to protect sensitive data and ensure compliance with federal regulations.',
         passages: [],
       },
       {
         id: 'r4',
-        text: 'Demonstrated ability to communicate complex Medicare and Medicaid program rules to beneficiaries, providers, and other stakeholders.',
+        text: 'Specialized experience must include leading the deployment and operationalization of AI/ML models in production environments, and providing technical guidance on AI/ML platform architecture to cross-functional teams.',
         passages: [
           { passageId: 's2', matchStrength: 'partial' },
         ],
       },
     ],
     passageIndex: [
-      { passageId: 's1', requirementIds: ['r1'] },
+      { passageId: 's1', requirementIds: [] },
       { passageId: 's2', requirementIds: ['r4'] },
       { passageId: 's3', requirementIds: [] },
     ],

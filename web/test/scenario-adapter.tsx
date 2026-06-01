@@ -37,7 +37,7 @@ export async function setup(scenarioName: string, groupLabel: string): Promise<A
   if (scenarioName === 'Review Applicant Resume Against PD Requirements') {
     const { setupPositionDetail, openResumeReader, clickPDRequirement } = await import('./test-driver');
     const session = await signInAsHRSpecialist();
-    const { container } = await setupPositionDetail(session, 'Health Insurance Specialist');
+    const { container } = await setupPositionDetail(session, 'IT Specialist (Artificial Intelligence)');
     await openResumeReader(container, 'Jordan Mitchell');
     if (groupLabel.includes('Mid-conditions')) {
       await clickPDRequirement(container, 0);
@@ -92,8 +92,8 @@ async function verifyPipeline(ctx: AdapterContext, postcondition: string): Promi
     'Maria sees the "IT Specialist (Cybersecurity)" position with status "Posted".': () => {
       assertPositionStatus(container, 'IT Specialist (Cybersecurity)', 'Posted');
     },
-    'Maria sees the "Health Insurance Specialist" position with status "Cert Issued".': () => {
-      assertPositionStatus(container, 'Health Insurance Specialist', 'Cert Issued');
+    'Maria sees the "IT Specialist (Artificial Intelligence)" position with status "Cert Issued".': () => {
+      assertPositionStatus(container, 'IT Specialist (Artificial Intelligence)', 'Cert Issued');
     },
     'Maria sees the "IT Specialist (Systems Administration)" position with status "Interviewing".': () => {
       assertPositionStatus(container, 'IT Specialist (Systems Administration)', 'Interviewing');
@@ -305,8 +305,8 @@ export async function impliedSetup(scenarioName: string): Promise<{ authenticate
     const { authenticateAPI, getPositions, getPositionById, getApplicantResumes, getResumeContent, getResumeMapping } = await import('./test-driver');
     const token = await authenticateAPI();
     const positions = await getPositions(token);
-    const hisPosition = positions.find(p => p.title === 'Health Insurance Specialist');
-    if (!hisPosition) throw new Error('Health Insurance Specialist position not found');
+    const hisPosition = positions.find(p => p.title === 'IT Specialist (Artificial Intelligence)');
+    if (!hisPosition) throw new Error('IT Specialist (Artificial Intelligence) position not found');
     const detail = await getPositionById(token, hisPosition.id);
     const resumes = await getApplicantResumes(token, hisPosition.id);
     if (resumes.length !== 3) throw new Error(`Expected 3 resumes, got ${resumes.length}`);
@@ -351,8 +351,8 @@ export async function impliedVerify(ctx: { authenticated: boolean }, scenarioNam
     const { authenticateAPI, getPositions, getApplicantResumes, getResumeContent, getResumeMapping } = await import('./test-driver');
     const token = await authenticateAPI();
     const positions = await getPositions(token);
-    const hisPosition = positions.find(p => p.title === 'Health Insurance Specialist');
-    if (!hisPosition) throw new Error('Health Insurance Specialist position not found');
+    const hisPosition = positions.find(p => p.title === 'IT Specialist (Artificial Intelligence)');
+    if (!hisPosition) throw new Error('IT Specialist (Artificial Intelligence) position not found');
     const resumes = await getApplicantResumes(token, hisPosition.id);
     const expectedNames = ['Jordan Mitchell', 'Priya Ramanathan', 'David Chen'];
     for (const name of expectedNames) {
