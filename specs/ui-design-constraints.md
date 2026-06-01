@@ -14,15 +14,17 @@ No formal CMS brand assets for this internal tool. Use a clean, professional gov
 
 ### Colors
 
-| Name | Hex | Category |
+Using USWDS design tokens:
+
+| Name | Token | Category |
 |---|---|---|
-| Navy | #1A2B4A | Primary — headers, navigation |
-| Slate | #475569 | Primary — body text |
-| Light Gray | #F8FAFC | Primary — page background |
-| Blue | #2563EB | Accent — interactive elements, links |
-| Green | #16A34A | Expanded — success states, strong matches |
-| Amber | #D97706 | Expanded — warnings, partial matches |
-| Red | #DC2626 | Expanded — errors, rejected suggestions |
+| Primary Darker | primary-darker | Primary — headers, navigation |
+| Ink | ink | Primary — body text |
+| Base Lightest | base-lightest | Primary — page background |
+| Primary | primary | Accent — interactive elements, links |
+| Success | success | Expanded — success states, strong matches |
+| Warning | warning | Expanded — warnings, partial matches |
+| Error | error | Expanded — errors, rejected suggestions |
 
 ## Quality Attributes
 
@@ -39,7 +41,7 @@ Cross-cutting interaction principles that apply to every screen and component. T
 ### Brand
 
 - The application header displays "CMS Hiring Tool" as the application name.
-- The application uses the Inter font family for all text.
+- The application uses the Public Sans font family for all text.
 
 ### Escapability
 

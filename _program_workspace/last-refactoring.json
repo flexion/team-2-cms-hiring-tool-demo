@@ -1,0 +1,8 @@
+{
+  "pattern": "Extract Module",
+  "trigger_condition": "SPLIT",
+  "source_modules": ["web/src/hiring-pipeline.ts"],
+  "target_modules": ["web/src/hiring-pipeline.ts", "web/src/pipeline-api.ts"],
+  "scenario": "View Active Hiring Pipeline",
+  "iteration": 3
+}

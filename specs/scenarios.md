@@ -88,11 +88,11 @@ Maria Torres, a human HR Specialist
 
 ### Narrative
 
-Maria navigated to the position detail page for the Health Insurance Specialist position. She scrolled to the **applicant resumes** section and saw the three candidates whose resumes had been filtered and screened through the **OHC certificate** process. She clicked on Jordan Mitchell's resume to open the **resume reader**.
+Maria navigated to the position detail page for the Health Insurance Specialist position. She scrolled to the **applicant resumes** section, which listed the candidates whose resumes had been filtered and screened through the **OHC certificate** process. She clicked on Jordan Mitchell's resume to open the **resume reader**.
 
-The resume reader displayed a split-pane view. The left pane showed the PD **requirements** — duties and specialized experience criteria — rendered as clickable sections. The right pane showed Jordan Mitchell's **resume content** rendered as clickable passages. The system had used the LLM to compute a **bidirectional mapping** between PD requirements and resume passages, showing which parts of the resume related to which requirements.
+The resume reader displayed a split-pane view. The left pane showed the PD **requirements** — duties and specialized experience criteria — rendered as clickable sections. Each of the four requirements appeared in the left pane as a clickable section, so Maria could see at a glance that the bidirectional mapping had been computed for every requirement. The right pane showed Jordan Mitchell's **resume content** rendered as clickable passages. The system had used the LLM to compute a **bidirectional mapping** between PD requirements and resume passages, showing which parts of the resume related to which requirements.
 
-Maria clicked on the first PD requirement (a duty statement about administering health insurance programs). The resume reader **highlighted** the passages in Jordan's resume that mapped to that requirement, using color-coding to indicate relevance. She then clicked a passage in Jordan's resume about their Medicare Part D experience — the reader highlighted which PD requirements that passage related to, showing it mapped to two different duties.
+Maria clicked on the first PD requirement (a duty statement about administering health insurance programs). The resume reader **highlighted** the passages in Jordan's resume that mapped to that requirement, using color-coding to indicate relevance. Some passages appeared in a darker color indicating a strong match, while others showed in a lighter color indicating a partial match. She also clicked one of the highlighted passages — the reader then highlighted the PD requirements in the left pane that the passage related to.
 
 ### Mid-conditions (after Maria clicks a PD requirement)
 

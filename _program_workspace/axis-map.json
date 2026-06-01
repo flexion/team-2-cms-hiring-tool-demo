@@ -1,0 +1,34 @@
+{
+  "axes": [
+    {
+      "facet": "role",
+      "axis": "HR Specialist",
+      "interests": ["view active hiring pipeline", "draft and refine position descriptions with LLM assistance"],
+      "modules": ["web/src/hr-specialist.tsx"]
+    },
+    {
+      "facet": "nature_of_user",
+      "axis": "programmatic",
+      "interests": ["serve the hiring pipeline over HTTP for programmatic consumers"],
+      "modules": ["web/src/pipeline-api.ts"]
+    },
+    {
+      "facet": "internal_vs_external",
+      "axis": "internal",
+      "interests": ["pure domain accessors for the hiring pipeline shared by all consumers", "PD working copy management"],
+      "modules": ["web/src/internal_vs_external/hiring-pipeline.ts"]
+    },
+    {
+      "facet": "internal_vs_external",
+      "axis": "external (LLM Service)",
+      "interests": ["generate LLM-powered suggestions for position description improvement"],
+      "modules": ["web/src/internal_vs_external/pd-suggestions.ts"]
+    },
+    {
+      "facet": "composition_root",
+      "axis": "app",
+      "interests": ["wire HRSpecialist component into the React DOM root", "load CSS (Public Sans, USWDS)"],
+      "modules": ["web/src/main.tsx"]
+    }
+  ]
+}
